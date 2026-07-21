@@ -1,0 +1,10 @@
+{
+  "name": "nextraise-analytics",
+  "version": "1.0.0",
+  "description": "NextRaise Growth Analytics Dashboard",
+  "scripts": {
+    "deploy": "vercel --prod"
+  },
+  "author": "nextraise-vivek",
+  "license": "ISC"
+}
