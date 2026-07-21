@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NextRaise — Growth Analytics</title>
+<link rel="icon" type="image/png" href="https://nextraise.ai/images/nextraise-logo.png">
+<link rel="apple-touch-icon" href="https://nextraise.ai/images/nextraise-logo.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
 :root{color-scheme:light;
@@ -100,8 +102,10 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
     <a data-tab="activation">⚡ Activation</a>
     <a data-tab="monetization">💳 Monetization</a>
     <a data-tab="retention">🔁 Retention</a>
-    <div class="nav-section">Other</div>
+    <div class="nav-section">Growth</div>
     <a data-tab="lifecycle">✉️ Lifecycle</a>
+    <a data-tab="referrals">🔗 Referrals</a>
+    <div class="nav-section">Monitor</div>
     <a data-tab="features">🧩 Features</a>
     <a data-tab="dataquality">🛡️ Data Quality</a>
   </nav>
@@ -243,6 +247,25 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
       <div class="card"><h3>⚠ Feature errors</h3><table class="bd" id="feat-err"><thead></thead><tbody></tbody></table></div>
     </section>
 
+    <!-- REFERRALS -->
+    <section data-panel="referrals" style="display:none">
+      <h2 class="tabh">🔗 Referrals <span class="pg-badge">postgres</span></h2>
+      <div class="kpis" id="ref-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="card">
+        <h3>Referral leaderboard
+          <span class="tip" data-tip="Source: postgres.users. referred_by_id links who referred whom. Converted = referred user whose plan_cache is not free/null. Revenue = their completed INR payments from postgres.payments.">i</span>
+          <span class="sub">users referred · converted to paid · revenue generated</span>
+        </h3>
+        <table class="bd" id="ref-top"><thead></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Referral rewards <span class="pg-badge">postgres</span>
+          <span class="sub" id="ref-rewards-sub">referral_rewards table</span>
+        </h3>
+        <table class="bd" id="ref-rewards"><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
+
     <!-- DATA QUALITY -->
     <section data-panel="dataquality" style="display:none">
       <h2 class="tabh">🛡️ Data Quality & Errors</h2>
@@ -266,10 +289,12 @@ const CONFIG={
 };
 const NUM=n=>{n=+n||0;return n.toLocaleString('en-IN')};
 const PCT=(a,b)=>b>0?(100*a/b).toFixed(1)+'%':'—';
-// Fast inline check — avoids expensive NOT IN subquery
-const EXCL_EXPR="coalesce(person.properties.$internal_or_test_user, false) != true";
+const EXCL_EXPR="person_id NOT IN COHORT 278743 AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND lower(coalesce(person.properties.email,'')) NOT LIKE '%test%'";
+const PG_EXCL="user_email NOT LIKE '%@nextraise.ai' AND user_email NOT LIKE '%@creditdharma.in' AND lower(user_email) NOT LIKE '%test%'";
+const h=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const CHMED="person.properties.first_touch_medium", CHSRC="person.properties.first_touch_source";
 const CHEXPR_F=`multiIf((${CHMED}='online_ads' AND ${CHSRC}='google_ads') OR ${CHMED}='cpc','SEM', (${CHMED}='online_ads' AND ${CHSRC}='meta_ads') OR ${CHMED} IN ('paid','social'),'Paid social', ${CHMED} IN ('influencer','influencer_boost'),'Influencer', ${CHMED}='extension','Extension', ${CHMED}='email','Email', coalesce(${CHMED},'')='','Unattributed','Other')`;
+const CHEXPR_G=CHEXPR_F.replace(/person\.properties\.first_touch_medium/g,"any(person.properties.first_touch_medium)").replace(/person\.properties\.first_touch_source/g,"any(person.properties.first_touch_source)");
 
 const DIM_EXPR={
   country:"multiIf(person.properties.$geoip_country_code='IN','India', person.properties.$geoip_country_code IN ('US','CA'),'US/CA', coalesce(person.properties.$geoip_country_code,'')='','Unknown','RoW')",
@@ -382,14 +407,30 @@ function breakdownSQL(){
   const dimExpr=DIM_EXPR[state.bdDim]||DIM_EXPR.country;
   return `SELECT ${dimExpr} AS k, uniqIf(person_id,event='$pageview') AS visitors, uniqIf(person_id,event='signup_complete') AS signups, uniqIf(person_id,${VAL_COND}) AS activated, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY k ORDER BY visitors DESC LIMIT 20`;
 }
+function mainSQL(){
+  const bucket=state.gran==='hour'?"toStartOfHour(min(timestamp))":"toDate(min(timestamp))";
+  const VAL="event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')";
+  return `WITH pp AS (SELECT person_id, ${bucket} AS bucket,
+    multiIf(any(person.properties.$geoip_country_code)='IN','India', any(person.properties.$geoip_country_code) IN ('US','CA'),'US/CA', coalesce(any(person.properties.$geoip_country_code),'')='','Unknown','RoW') AS country,
+    coalesce(nullIf(argMaxIf(properties.$device_type,timestamp,properties.$device_type!=''),''),'Unknown') AS device,
+    multiIf(any(person.properties.first_touch_landing)='/','Main', any(person.properties.first_touch_landing) LIKE '/lp/%','SEM', coalesce(any(person.properties.first_touch_landing),'')='','Direct','Other') AS flow,
+    ${CHEXPR_G} AS channel,
+    if(any(person.properties.is_paid),'Paid','Free') AS plan,
+    maxIf(1,event='$pageview') AS v, maxIf(1,event='signup_complete') AS s,
+    if(maxIf(1,event='signup_complete')=1 AND maxIf(1,${VAL})=1,1,0) AS sa,
+    maxIf(1,event='payment_completed') AS p,
+    maxIf(1,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='false') AS r
+    FROM events WHERE ${timeW()} AND ${excl()} GROUP BY person_id)
+    SELECT toString(bucket) AS bucket,country,device,flow,channel,plan, sum(v) AS visitors,sum(s) AS signups,sum(sa) AS activated,sum(p) AS paid,sum(r) AS returning FROM pp GROUP BY bucket,country,device,flow,channel,plan ORDER BY sum(v)+sum(s) DESC LIMIT 500`;
+}
 
 /* ---------- Postgres revenue query (truth source) ---------- */
 async function loadRevenueTiles(){
   const el=document.getElementById('rev-grid');el.innerHTML='<div class="loadingcard">Loading…</div>';
   try{
     const [rev,active]=await Promise.all([
-      q(`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND created_at >= now() - INTERVAL ${state.amount} ${state.unit} GROUP BY currency ORDER BY revenue DESC`),
-      q(`SELECT count(DISTINCT user_id) AS n FROM postgres.subscriptions WHERE status='active'`)
+      q(`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND created_at >= now() - INTERVAL ${state.amount} ${state.unit} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`),
+      q(`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`)
     ]);
     const inr=rev.find(r=>r.currency==='INR')||{revenue:0,payers:0};
     const usd=rev.find(r=>r.currency==='USD')||{revenue:0,payers:0};
@@ -543,7 +584,7 @@ async function loadMonetization(){
   await tableInto('mon-page',"coalesce(nullIf(properties.page_path,''),'(none)')",[{label:'Paywall hits',cond:"event='paywall_hit'"}],["event='paywall_hit'"],{label:'Page',tip:'Page the paywall fired on (paywall_hit.page_path).'});
   // Postgres plans table
   try{
-    const rows=await q(`SELECT plan_key, count(*) AS payments, sum(amount) AS revenue, currency FROM postgres.payments WHERE status='completed' AND created_at >= now() - INTERVAL ${state.amount} ${state.unit} GROUP BY plan_key, currency ORDER BY payments DESC LIMIT 20`);
+    const rows=await q(`SELECT plan_key, count(*) AS payments, sum(amount) AS revenue, currency FROM postgres.payments WHERE status='completed' AND created_at >= now() - INTERVAL ${state.amount} ${state.unit} AND ${PG_EXCL} GROUP BY plan_key, currency ORDER BY payments DESC LIMIT 20`);
     const _th=document.querySelector('#mon-plans thead'),_tb=document.querySelector('#mon-plans tbody');
     if(_th&&_tb){_th.innerHTML='<tr><th>Plan</th><th>Payments</th><th>Revenue</th><th>Currency</th></tr>';
       _tb.innerHTML=rows.map(r=>`<tr><td>${r.plan_key||'(none)'}</td><td>${NUM(r.payments)}</td><td>${NUM(r.revenue)}</td><td>${r.currency}</td></tr>`).join('')||'<tr><td class="loadingcard">No data.</td></tr>';}
@@ -590,7 +631,47 @@ async function loadDataQuality(){
   await errorsInto('dq-err',['api_request_failed','resume_upload_failed','sidebar_render_crashed','lp_result_error','api_request_timeout','lp_file_error','payment_failed','email_bounced','otp_error','oauth_error','onboarding_error','lp_handoff_error','match_score_check_failed','ai_generate_failed','payment_checkout_error']);
 }
 
-const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,features:loadFeatures,dataquality:loadDataQuality};
+async function loadReferrals(){
+  document.getElementById('ref-kpis').innerHTML='<div class="loadingcard">Loading…</div>';
+  try{
+    const [summary,revRow]=await Promise.all([
+      q(`SELECT countIf(referral_code IS NOT NULL AND referral_code!='') AS has_code, countIf(referred_by_id IS NOT NULL) AS referred_signups, countIf(referred_by_id IS NOT NULL AND plan_cache NOT IN ('free','') AND plan_cache IS NOT NULL) AS referred_paid FROM postgres.users WHERE email NOT LIKE '%@nextraise.ai' AND email NOT LIKE '%@creditdharma.in' AND lower(email) NOT LIKE '%test%'`),
+      q(`SELECT count(DISTINCT p.user_id) AS payers, round(sum(p.amount)) AS revenue FROM postgres.payments p INNER JOIN postgres.users u ON u.id=p.user_id AND u.referred_by_id IS NOT NULL WHERE p.status='completed' AND p.currency='INR' AND ${PG_EXCL}`)
+    ]);
+    const s=summary[0]||{},rv=revRow[0]||{};
+    document.getElementById('ref-kpis').innerHTML=[
+      ['Users with ref code',+s.has_code||0,'--brand'],
+      ['Referred signups',+s.referred_signups||0,'--sig'],
+      ['Referred → Paid',+s.referred_paid||0,'--paid'],
+      ['Referred revenue',`₹${NUM(rv.revenue||0)}`,'--mrr'],
+    ].map(([n,v,c])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${c})"></span>${n}</div><div class="v" style="font-size:${typeof v==='string'&&v.length>8?'16px':'22px'}">${typeof v==='number'?NUM(v):v}</div></div>`).join('');
+  }catch(e){document.getElementById('ref-kpis').innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
+
+  const tb=document.querySelector('#ref-top tbody'),th=document.querySelector('#ref-top thead');
+  if(tb){tb.innerHTML='<tr><td class="loadingcard">Loading…</td></tr>';
+    try{
+      const rows=await q(`SELECT r.name AS rn, r.email AS re, r.referral_code AS code, count(u.id) AS referred, countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS converted, round(COALESCE(SUM(pay.amount),0)) AS rev_inr FROM postgres.users r INNER JOIN postgres.users u ON u.referred_by_id=r.id LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' GROUP BY r.name,r.email,r.referral_code HAVING referred>0 ORDER BY referred DESC LIMIT 50`);
+      const mx=Math.max(...rows.map(r=>+r.referred||0),1);
+      if(th)th.innerHTML='<tr><th>Referrer</th><th>Code</th><th>Referred</th><th>Paid</th><th>Conv%</th><th>Revenue (INR)</th></tr>';
+      tb.innerHTML=rows.map(r=>`<tr>
+        <td class="barcell"><div class="mini" style="width:${100*(+r.referred||0)/mx}%"></div><span><b>${h(r.rn||'')}</b><br><span style="color:var(--muted);font-size:10.5px">${h(r.re||'')}</span></span></td>
+        <td><code style="background:var(--chip);padding:2px 7px;border-radius:5px;font-size:11px">${h(r.code||'')}</code></td>
+        <td>${NUM(r.referred)}</td><td>${NUM(r.converted)}</td>
+        <td>${PCT(+r.converted,+r.referred)}</td><td>₹${NUM(r.rev_inr)}</td>
+      </tr>`).join('')||'<tr><td class="loadingcard" colspan="6">No referrals found.</td></tr>';
+    }catch(e){tb.innerHTML=`<tr><td class="cardErr" colspan="6">⚠ ${e.message}</td></tr>`;}}
+
+  const rtb=document.querySelector('#ref-rewards tbody'),rth=document.querySelector('#ref-rewards thead');
+  if(rtb){rtb.innerHTML='<tr><td class="loadingcard">Loading…</td></tr>';
+    try{
+      const rows=await q(`SELECT status, count(*) AS cnt, round(COALESCE(sum(reward_amount),0)) AS total FROM postgres.referral_rewards GROUP BY status ORDER BY cnt DESC LIMIT 20`);
+      if(rth)rth.innerHTML='<tr><th>Status</th><th>Count</th><th>Total reward</th></tr>';
+      rtb.innerHTML=rows.map(r=>`<tr><td>${h(r.status||'—')}</td><td>${NUM(r.cnt)}</td><td>${NUM(r.total)}</td></tr>`).join('')||'<tr><td class="loadingcard" colspan="3">No rewards data.</td></tr>';
+      const sub=document.getElementById('ref-rewards-sub');if(sub)sub.textContent=`${rows.length} status types`;
+    }catch(e){rtb.innerHTML=`<tr><td class="cardErr" colspan="3">⚠ ${e.message}</td></tr>`;}}
+}
+
+const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals};
 
 /* ---------- orchestration ---------- */
 async function loadOverview(){
