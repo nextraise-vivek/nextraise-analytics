@@ -824,12 +824,19 @@ const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetizatio
 
 /* ---------- orchestration ---------- */
 async function loadOverview(){
-  // Fire both batches simultaneously — events (fast) + postgres (slow)
-  const pgProm=qBatch([
+  // Show postgres tiles in loading state immediately
+  const revEl=document.getElementById('rev-grid');
+  if(revEl)revEl.innerHTML='<div class="loadingcard">Loading…</div>';
+
+  // Fire postgres batch in background — does NOT block the overlay
+  qBatch([
     {id:'rev',query:`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`},
     {id:'active',query:`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`},
-  ]).catch(e=>{console.warn('Postgres batch:',e.message);return null;});
+  ]).then(pg=>{
+    renderRevenueTilesData(batchGet(pg,'rev'),batchGet(pg,'active')[0]||{});
+  }).catch(e=>{if(revEl)revEl.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;});
 
+  // Events batch — overlay stays only until this resolves
   const ev=await qBatch([
     {id:'kpi',query:kpiSQL()},
     {id:'trend',query:trendSQL()},
@@ -841,9 +848,7 @@ async function loadOverview(){
   renderOverview();
   renderHeatData(batchGet(ev,'heat'));
   renderGeoData(batchGet(ev,'geo'));
-
-  const pg=await pgProm;
-  renderRevenueTilesData(pg?batchGet(pg,'rev'):null,pg?(batchGet(pg,'active')[0]||{}):null);
+  // loadOverview resolves here → busy(false) fires → overlay gone
 }
 
 async function refreshActive(requery){
