@@ -523,7 +523,11 @@ async function errorsInto(elId,evList,extra){
 const VAL_COND="event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')";
 
 function kpiSQL(){
-  return `SELECT uniqIf(person_id,event='$pageview') AS visitors, uniqIf(person_id,event='signup_complete') AS signups, uniqIf(person_id,${VAL_COND}) AS activated, uniqIf(person_id,event='payment_completed') AS paid, uniqIf(person_id,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='false') AS returning FROM events WHERE ${baseWhere()}`;
+  return `SELECT uniqIf(person_id,event='$pageview') AS visitors, uniqIf(person_id,event='signup_complete') AS signups, 0 AS activated, uniqIf(person_id,event='payment_completed') AS paid, uniqIf(person_id,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='false') AS returning FROM events WHERE ${baseWhere()}`;
+}
+function activatedSQL(){
+  /* strict intersection: persons who both signed up AND viewed a result page in this window */
+  return `SELECT countIf(had_signup AND had_result) AS activated FROM (SELECT person_id, max(event='signup_complete') AS had_signup, max(${VAL_COND}) AS had_result FROM events WHERE ${baseWhere()} GROUP BY person_id)`;
 }
 function trendSQL(){
   const bucket=state.gran==='hour'?"toStartOfHour(timestamp)":"toDate(timestamp)";
@@ -601,7 +605,7 @@ function renderOverview(){
     {k:'returning',n:'Returning',c:'--ret'},
   ];
   document.getElementById('kpis').innerHTML=st.map(s=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${s.c})"></span>${s.n}</div><div class="v">${NUM(t[s.k])}</div><div class="c">${s.cv?PCT(t[s.cv[0]],t[s.cv[1]])+' of '+s.cv[1]:(s.k==='returning'?'returning logins':'in range')}</div></div>`).join('');
-  const ftips={visitors:'Unique persons with a $pageview in range.',signups:'New accounts: signup_complete event.',activated:'Signed-up users who also viewed a result page (/comprehensive-analysis/results or /tailor). = "got value".',paid:'payment_completed event fires on successful payment. See Revenue card below for postgres truth.'};
+  const ftips={visitors:'Unique persons with a $pageview in range.',signups:'New accounts: signup_complete event.',activated:'Strict intersection: users who BOTH signed up AND viewed a result page (/comprehensive-analysis/results or /tailor) in this window. Will always be ≤ signups.',paid:'payment_completed event fires on successful payment. See Revenue card below for postgres truth.'};
   const fst=[['visitors','Visitors','--vis'],['signups','Signups','--sig'],['activated','Activated','--act'],['paid','Paid','--paid']];
   const max=Math.max(+t.visitors||0,1);
   document.getElementById('funnel').innerHTML=fst.map((s,i)=>{const val=+t[s[0]]||0,w=Math.max(3,100*val/max),prev=i>0?+t[fst[i-1][0]]||0:null;
@@ -839,12 +843,15 @@ async function loadOverview(){
   // Events batch — overlay stays only until this resolves
   const ev=await qBatch([
     {id:'kpi',query:kpiSQL()},
+    {id:'activated',query:activatedSQL()},
     {id:'trend',query:trendSQL()},
     {id:'breakdown',query:breakdownSQL()},
     {id:'heat',query:`SELECT toDayOfWeek(timestamp) AS dow, toHour(timestamp) AS hr, count(DISTINCT person_id) AS c FROM events WHERE event='${state.heatMetric}' AND ${baseWhere()} GROUP BY dow,hr ORDER BY dow,hr LIMIT 500`},
     {id:'geo',query:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`},
   ]);
-  RAW={kpis:batchGet(ev,'kpi')[0]||{},trend:batchGet(ev,'trend'),breakdown:batchGet(ev,'breakdown')};
+  const kpis=batchGet(ev,'kpi')[0]||{};
+  kpis.activated=(batchGet(ev,'activated')[0]||{}).activated||0;
+  RAW={kpis,trend:batchGet(ev,'trend'),breakdown:batchGet(ev,'breakdown')};
   renderOverview();
   renderHeatData(batchGet(ev,'heat'));
   renderGeoData(batchGet(ev,'geo'));
