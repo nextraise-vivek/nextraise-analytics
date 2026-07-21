@@ -88,10 +88,70 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
 .alert-box{background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#92400e}
 .alert-box strong{color:#78350f}
 .pg-badge{font-size:9px;background:#0f766e;color:#fff;border-radius:4px;padding:1px 5px;vertical-align:1px;margin-left:4px}
-@media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2,.grid2b,.grid3{grid-template-columns:1fr}}
+/* --- Top bar (mobile only) --- */
+.topbar{display:none;height:48px;background:var(--panel);border-bottom:1px solid var(--line);padding:0 14px;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.topbar .tm{font-weight:700;font-size:14px;color:var(--brand);flex:1}
+.topbar .tm small{display:block;font-weight:500;font-size:10px;color:var(--muted);line-height:1}
+.hamburger{border:none;background:none;cursor:pointer;font-size:22px;line-height:1;padding:4px;color:var(--ink)}
+/* Nav backdrop */
+.nav-bd{display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
+.nav-bd.show{display:block}
+/* Filter extras wrapper — transparent on desktop */
+.filter-extras{display:contents}
+.filter-more-btn{display:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font:11px/1.3 inherit;color:var(--muted);cursor:pointer;white-space:nowrap;align-items:center;gap:4px}
+/* Heat map scroll wrapper */
+.heat-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.heat-wrap .heat{min-width:520px}
+/* Referrals kpi responsive */
+@media(max-width:900px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .grid2,.grid2b,.grid3{grid-template-columns:1fr}
+  #ref-kpis{grid-template-columns:repeat(2,1fr)!important}
+}
+@media(max-width:768px){
+  .topbar{display:flex}
+  body{font-size:12px}
+  .app{flex-direction:column}
+  .nav{
+    position:fixed;top:48px;left:-224px;width:224px;
+    height:calc(100vh - 48px);z-index:95;
+    transition:left .22s ease;overflow-y:auto;
+    border-right:1px solid var(--line);
+  }
+  .nav.open{left:0;box-shadow:4px 0 24px rgba(0,0,0,.15)}
+  .nav-bd{top:48px}
+  .main{padding:8px 10px 60px}
+  .filters{position:static;border-radius:8px;padding:8px 10px;gap:8px}
+  .filter-more-btn{display:flex}
+  .filter-extras{display:none;flex-wrap:wrap;gap:8px;width:100%}
+  .filter-extras.open{display:flex}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  #rev-grid{grid-template-columns:repeat(2,1fr)!important}
+  #ref-kpis{grid-template-columns:repeat(2,1fr)!important}
+  .chartbox{height:180px}
+  .apply{margin-left:0;width:100%}
+  .apply .btn{width:100%;padding:10px 14px;font-size:13px}
+  table.bd{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .kpi .v{font-size:18px}
+  .chips{gap:4px}
+  .chip{font-size:10px;padding:2px 8px}
+  h2.tabh{font-size:14px}
+  .card{padding:10px}
+  .card h3{font-size:12px}
+}
+@media(max-width:480px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  #rev-grid{grid-template-columns:1fr 1fr!important}
+  .kpi .v{font-size:16px}
+}
 </style>
 </head>
 <body>
+<div class="topbar">
+  <div class="tm">NextRaise<small>Growth Analytics · Live</small></div>
+  <button class="hamburger" id="hamburger" aria-label="Open navigation">☰</button>
+</div>
+<div class="nav-bd" id="nav-bd"></div>
 <div class="app">
   <nav class="nav">
     <div class="brand">NextRaise<small>Growth Analytics · Live</small></div>
@@ -145,14 +205,17 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
           <input id="f-to" type="date" style="min-width:115px">
         </div>
       </div>
-      <div class="fg"><label>Granularity</label><select id="f-gran"><option value="day" selected>Daily</option><option value="hour">Hourly</option></select></div>
-      <div class="fg"><label>Country</label><select id="f-country"><option>All</option><option>India</option><option>US/CA</option><option>RoW</option><option>Unknown</option></select></div>
-      <div class="fg"><label>Platform</label><select id="f-device"><option>All</option><option value="Web">Web (desktop)</option><option value="M-Web">M-Web (mobile)</option><option value="Tablet">Tablet</option><option value="Unknown">Unknown</option></select></div>
-      <div class="fg"><label>Flow</label><select id="f-flow"><option>All</option><option>Main</option><option>SEM</option><option>Direct</option><option>Other</option></select></div>
-      <div class="fg"><label>Channel</label><select id="f-channel"><option>All</option><option>SEM</option><option>Paid social</option><option>Influencer</option><option>Extension</option><option>Email</option><option>Unattributed</option><option>Other</option></select></div>
-      <div class="fg"><label>Plan</label><select id="f-plan"><option>All</option><option>Free</option><option>Paid</option></select></div>
-      <div class="fg"><label>Units</label><div class="seg" id="f-units"><button data-u="num" class="on">#</button><button data-u="pct">%</button></div></div>
-      <div class="fg"><label>Excl. internal</label><div class="seg" id="f-test"><button data-t="1" class="on">On</button><button data-t="0">Off</button></div></div>
+      <button class="filter-more-btn" id="filter-more-btn">⚙ Filters</button>
+      <div class="filter-extras" id="filter-extras">
+        <div class="fg"><label>Granularity</label><select id="f-gran"><option value="day" selected>Daily</option><option value="hour">Hourly</option></select></div>
+        <div class="fg"><label>Country</label><select id="f-country"><option>All</option><option>India</option><option>US/CA</option><option>RoW</option><option>Unknown</option></select></div>
+        <div class="fg"><label>Platform</label><select id="f-device"><option>All</option><option value="Web">Web (desktop)</option><option value="M-Web">M-Web (mobile)</option><option value="Tablet">Tablet</option><option value="Unknown">Unknown</option></select></div>
+        <div class="fg"><label>Flow</label><select id="f-flow"><option>All</option><option>Main</option><option>SEM</option><option>Direct</option><option>Other</option></select></div>
+        <div class="fg"><label>Channel</label><select id="f-channel"><option>All</option><option>SEM</option><option>Paid social</option><option>Influencer</option><option>Extension</option><option>Email</option><option>Unattributed</option><option>Other</option></select></div>
+        <div class="fg"><label>Plan</label><select id="f-plan"><option>All</option><option>Free</option><option>Paid</option></select></div>
+        <div class="fg"><label>Units</label><div class="seg" id="f-units"><button data-u="num" class="on">#</button><button data-u="pct">%</button></div></div>
+        <div class="fg"><label>Excl. internal</label><div class="seg" id="f-test"><button data-t="1" class="on">On</button><button data-t="0">Off</button></div></div>
+      </div>
       <div class="apply"><button class="btn" id="apply">Apply</button></div>
     </div>
     <div class="chips" id="chips"></div>
@@ -197,7 +260,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
         <select id="heat-metric" style="margin-left:6px;border:1px solid var(--line);border-radius:8px;padding:4px 8px">
           <option value="signup_complete">Signups</option><option value="$pageview">Visitors</option><option value="payment_completed">Paid</option></select>
         <span class="sub" id="heat-sub"></span></h3>
-        <div class="heat" id="heat"></div>
+        <div class="heat-wrap"><div class="heat" id="heat"></div></div>
         <div class="legend"><span>Low</span><i style="background:#eef1f6"></i><i style="background:#bfdbfe"></i><i style="background:#60a5fa"></i><i style="background:#2563eb"></i><i style="background:#1e3a8a"></i><span>High · IST</span></div></div>
     </section>
 
@@ -800,7 +863,18 @@ function selectTab(t){
   refreshActive(true);
 }
 
-function bindNav(){document.querySelectorAll('.nav a').forEach(a=>a.onclick=()=>selectTab(a.dataset.tab));}
+function closeMobileNav(){document.querySelector('.nav').classList.remove('open');document.getElementById('nav-bd').classList.remove('show');}
+function bindNav(){document.querySelectorAll('.nav a').forEach(a=>a.onclick=()=>{selectTab(a.dataset.tab);closeMobileNav();});}
+function bindMobile(){
+  const ham=document.getElementById('hamburger');
+  const nav=document.querySelector('.nav');
+  const bd=document.getElementById('nav-bd');
+  ham.onclick=()=>{nav.classList.toggle('open');bd.classList.toggle('show');};
+  bd.onclick=()=>closeMobileNav();
+  const fmb=document.getElementById('filter-more-btn');
+  const fex=document.getElementById('filter-extras');
+  fmb.onclick=()=>{const open=fex.classList.toggle('open');fmb.innerHTML=open?'✕ Close':'⚙ Filters';};
+}
 function bindFilters(){
   document.getElementById('f-range').onchange=e=>{
     const v=e.target.value;
@@ -843,7 +917,7 @@ function bindFilters(){
   document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('[data-tip]'))tt.style.display='none';});
 })();
 
-bindNav();bindFilters();refreshActive(true);
+bindNav();bindFilters();bindMobile();refreshActive(true);
 </script>
 </body>
 </html>
