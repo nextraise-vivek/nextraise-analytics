@@ -328,6 +328,13 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
     <section data-panel="features" style="display:none">
       <h2 class="tabh">🧩 Feature Adoption</h2>
       <div class="card"><h3>Feature reach (unique users)</h3><table class="bd" id="feat-reach"><thead></thead><tbody></tbody></table></div>
+      <div class="card">
+        <h3>🔔 Notification Banner
+          <span class="tip" data-tip="banner_shown → banner_cta_click / banner_dismiss. CTR = CTA clicks ÷ shown (unique users). Dismiss rate = dismissed ÷ shown.">i</span>
+          <span class="sub" id="banner-sub"></span>
+        </h3>
+        <table class="bd" id="banner-table"><thead></thead><tbody></tbody></table>
+      </div>
       <div class="card"><h3>⚠ Feature errors</h3><table class="bd" id="feat-err"><thead></thead><tbody></tbody></table></div>
     </section>
 
@@ -782,7 +789,37 @@ async function loadFeatures(){
     [{label:'Users',cond:"1=1"}],
     ["(event IN ('job_match_analyzed','resume_downloaded','extension_installed','tracker_pipeline_view','comprehensive_analysis_results_view') OR (event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')))"],
     {label:'Feature',tip:'Unique users who reached each feature. ATS & Tailor by result-page view; others by core event.'});
+  await loadBannerStats();
   await errorsInto('feat-err',['match_score_check_failed','match_score_error_shown','ai_generate_failed','resume_upload_failed']);
+}
+
+async function loadBannerStats(){
+  const thead=document.querySelector('#banner-table thead');
+  const tbody=document.querySelector('#banner-table tbody');
+  thead.innerHTML='';tbody.innerHTML='<tr><td class="loadingcard">Loading…</td></tr>';
+  try{
+    const rows=await q(`
+      SELECT
+        coalesce(nullIf(properties.banner_id,''),'(unknown)') AS banner,
+        uniqIf(person_id, event='banner_shown')     AS shown,
+        uniqIf(person_id, event='banner_cta_click') AS cta_clicks,
+        uniqIf(person_id, event='banner_dismiss')   AS dismissed
+      FROM events
+      WHERE event IN ('banner_shown','banner_cta_click','banner_dismiss')
+        AND ${baseWhere()}
+      GROUP BY banner ORDER BY shown DESC
+    `);
+    document.getElementById('banner-sub').textContent=rangeLabel();
+    thead.innerHTML='<tr><th>Banner</th><th>Shown</th><th>CTA Clicks</th><th>CTR</th><th>Dismissed</th><th>Dismiss rate</th></tr>';
+    tbody.innerHTML=rows.map(r=>`<tr>
+      <td><b>${r.banner}</b></td>
+      <td>${NUM(r.shown)}</td>
+      <td>${NUM(r.cta_clicks)}</td>
+      <td style="color:var(--paid);font-weight:600">${PCT(+r.cta_clicks,+r.shown)}</td>
+      <td>${NUM(r.dismissed)}</td>
+      <td style="color:var(--warn)">${PCT(+r.dismissed,+r.shown)}</td>
+    </tr>`).join('')||'<tr><td class="loadingcard" colspan="6">No banner events in range.</td></tr>';
+  }catch(e){tbody.innerHTML=`<tr><td class="cardErr" colspan="6">⚠ ${e.message}</td></tr>`;}
 }
 
 async function loadDataQuality(){
