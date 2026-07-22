@@ -562,7 +562,8 @@ function mainSQL(){
 }
 
 /* ---------- Postgres revenue query (truth source) ---------- */
-const USD_INR=84;
+let USD_INR=86; // fallback; refreshed at load from open.er-api.com
+(async()=>{try{const r=await fetch('https://open.er-api.com/v6/latest/USD');const j=await r.json();if(j.rates&&j.rates.INR)USD_INR=Math.round(j.rates.INR*100)/100;}catch(e){}})();
 function renderRevenueTilesData(rev,active){
   const el=document.getElementById('rev-grid');
   if(!rev){el.innerHTML='<div class="cardErr">⚠ Postgres unavailable</div>';return;}
