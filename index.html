@@ -585,7 +585,7 @@ async function loadRevenueTiles(){
   const el=document.getElementById('rev-grid');el.innerHTML='<div class="loadingcard">Loading…</div>';
   try{
     const [rev,active]=await Promise.all([
-      q(`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`),
+      q(`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND created_at>='2026-05-01' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`),
       q(`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND s.plan!='free' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`)
     ]);
     renderRevenueTilesData(rev,active[0]||{});
@@ -750,7 +750,7 @@ async function loadMonetization(){
   await tableInto('mon-page',"coalesce(nullIf(properties.page_path,''),'(none)')",[{label:'Paywall hits',cond:"event='paywall_hit'"}],["event='paywall_hit'"],{label:'Page',tip:'Page the paywall fired on (paywall_hit.page_path).'});
   // Postgres plans table
   try{
-    const rows=await q(`SELECT plan_key, count(*) AS payments, sum(amount) AS revenue, currency FROM postgres.payments WHERE status='completed' AND created_at >= now() - INTERVAL ${state.amount} ${state.unit} AND ${PG_EXCL} GROUP BY plan_key, currency ORDER BY payments DESC LIMIT 20`);
+    const rows=await q(`SELECT plan_key, count(*) AS payments, sum(amount) AS revenue, currency FROM postgres.payments WHERE status='completed' AND created_at>='2026-05-01' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY plan_key, currency ORDER BY payments DESC LIMIT 20`);
     const _th=document.querySelector('#mon-plans thead'),_tb=document.querySelector('#mon-plans tbody');
     if(_th&&_tb){_th.innerHTML='<tr><th>Plan</th><th>Payments</th><th>Revenue</th><th>Currency</th></tr>';
       _tb.innerHTML=rows.map(r=>`<tr><td>${r.plan_key||'(none)'}</td><td>${NUM(r.payments)}</td><td>${NUM(r.revenue)}</td><td>${r.currency}</td></tr>`).join('')||'<tr><td class="loadingcard">No data.</td></tr>';}
@@ -877,7 +877,7 @@ async function loadOverview(){
 
   // Fire postgres batch in background — does NOT block the overlay
   qBatch([
-    {id:'rev',query:`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`},
+    {id:'rev',query:`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND created_at>='2026-05-01' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`},
     {id:'active',query:`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND s.plan!='free' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`},
   ]).then(pg=>{
     renderRevenueTilesData(batchGet(pg,'rev'),batchGet(pg,'active')[0]||{});
