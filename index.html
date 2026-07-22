@@ -126,7 +126,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
   .filter-extras{display:none;flex-wrap:wrap;gap:8px;width:100%}
   .filter-extras.open{display:flex}
   .kpis{grid-template-columns:repeat(2,1fr)}
-  #rev-grid{grid-template-columns:repeat(2,1fr)!important}
+  #rev-grid{grid-template-columns:repeat(2,1fr)!important;}
   #ref-kpis{grid-template-columns:repeat(2,1fr)!important}
   .chartbox{height:180px}
   .apply{margin-left:0;width:100%}
@@ -555,17 +555,22 @@ function mainSQL(){
 }
 
 /* ---------- Postgres revenue query (truth source) ---------- */
+const USD_INR=84;
 function renderRevenueTilesData(rev,active){
   const el=document.getElementById('rev-grid');
   if(!rev){el.innerHTML='<div class="cardErr">⚠ Postgres unavailable</div>';return;}
   const inr=rev.find(r=>r.currency==='INR')||{revenue:0,payers:0};
   const usd=rev.find(r=>r.currency==='USD')||{revenue:0,payers:0};
   const activePro=+((active||{}).n||0);
+  const totalInrEq=(+inr.revenue||0)+(+usd.revenue||0)*USD_INR;
+  const totalPayers=(+inr.payers||0)+(+usd.payers||0);
   document.getElementById('rev-sub').textContent=`${rangeLabel()} · postgres`;
+  el.style.gridTemplateColumns='repeat(4,1fr)';
   el.innerHTML=[
     ['₹ Revenue',`₹${NUM(inr.revenue)}`,`${NUM(inr.payers)} payers (INR)`,'--mrr'],
     ['$ Revenue',`$${(+usd.revenue||0).toFixed(2)}`,`${NUM(usd.payers)} payers (USD)`,'--paid'],
-    ['Active Pro',NUM(activePro),'active subscriptions now','--brand'],
+    ['Total (INR eq.)',`₹${NUM(totalInrEq)}`,`${NUM(totalPayers)} payers · $1=₹${USD_INR}`,'--brand'],
+    ['Active Pro',NUM(activePro),'paid subscriptions now','--brand'],
   ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:18px">${v}</div><div class="c">${c}</div></div>`).join('');
 }
 async function loadRevenueTiles(){
