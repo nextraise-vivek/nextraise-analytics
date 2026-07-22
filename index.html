@@ -350,10 +350,18 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
         <table class="bd" id="ref-top"><thead></thead><tbody></tbody></table>
       </div>
       <div class="card">
-        <h3>Referral rewards <span class="pg-badge">postgres</span>
-          <span class="sub" id="ref-rewards-sub">referral_rewards table</span>
+        <h3>🤝 Affiliate Program <span class="pg-badge">postgres</span>
+          <span class="tip" data-tip="Source: postgres.referral_rewards. Status='granted' = reward issued. Reversed = clawed back. Days = free days granted as reward.">i</span>
+          <span class="sub" id="aff-sub"></span>
         </h3>
-        <table class="bd" id="ref-rewards"><thead></thead><tbody></tbody></table>
+        <div class="kpis" id="aff-kpis" style="grid-template-columns:repeat(4,1fr);margin:0 0 14px"></div>
+        <table class="bd" id="aff-plans"><thead></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Referral engagement funnel
+          <span class="tip" data-tip="PostHog events: code_field_open → apply_attempt → discount_applied → purchase → reward_granted. Unique users per step in selected range.">i</span>
+        </h3>
+        <div class="funnel" id="ref-funnel"></div>
       </div>
     </section>
 
@@ -857,14 +865,58 @@ async function loadReferrals(){
       </tr>`).join('')||'<tr><td class="loadingcard" colspan="6">No referrals found.</td></tr>';
     }catch(e){tb.innerHTML=`<tr><td class="cardErr" colspan="6">⚠ ${e.message}</td></tr>`;}}
 
-  const rtb=document.querySelector('#ref-rewards tbody'),rth=document.querySelector('#ref-rewards thead');
-  if(rtb){rtb.innerHTML='<tr><td class="loadingcard">Loading…</td></tr>';
-    try{
-      const rows=await q(`SELECT status, count(*) AS cnt, round(COALESCE(sum(reward_amount),0)) AS total FROM postgres.referral_rewards GROUP BY status ORDER BY cnt DESC LIMIT 20`);
-      if(rth)rth.innerHTML='<tr><th>Status</th><th>Count</th><th>Total reward</th></tr>';
-      rtb.innerHTML=rows.map(r=>`<tr><td>${h(r.status||'—')}</td><td>${NUM(r.cnt)}</td><td>${NUM(r.total)}</td></tr>`).join('')||'<tr><td class="loadingcard" colspan="3">No rewards data.</td></tr>';
-      const sub=document.getElementById('ref-rewards-sub');if(sub)sub.textContent=`${rows.length} status types`;
-    }catch(e){rtb.innerHTML=`<tr><td class="cardErr" colspan="3">⚠ ${e.message}</td></tr>`;}}
+  /* ---- Affiliate Program ---- */
+  const affKpis=document.getElementById('aff-kpis');
+  const affTb=document.querySelector('#aff-plans tbody'),affTh=document.querySelector('#aff-plans thead');
+  if(affKpis)affKpis.innerHTML='<div class="loadingcard">Loading…</div>';
+  try{
+    const [summary,plans]=await Promise.all([
+      q(`SELECT
+          uniqIf(referrer_id, status='granted')                   AS active_referrers,
+          uniqIf(referred_user_id, status='granted')              AS converted_referred,
+          sumIf(amount, status='granted' AND currency='INR')      AS inr_paid,
+          sumIf(amount, status='granted' AND currency='USD')      AS usd_paid,
+          countIf(status='granted')                               AS total_rewards,
+          countIf(status='reversed')                              AS reversed
+         FROM postgres.referral_rewards`),
+      q(`SELECT
+          plan_key,
+          currency,
+          countIf(status='granted')                              AS rewards,
+          uniqIf(referrer_id, status='granted')                  AS referrers,
+          uniqIf(referred_user_id, status='granted')             AS referred_users,
+          sumIf(amount, status='granted')                        AS total_amount
+         FROM postgres.referral_rewards
+         GROUP BY plan_key, currency
+         ORDER BY rewards DESC LIMIT 20`)
+    ]);
+    const s=summary[0]||{};
+    document.getElementById('aff-sub').textContent=`${NUM(+s.total_rewards||0)} rewards granted · ${NUM(+s.reversed||0)} reversed`;
+    if(affKpis)affKpis.innerHTML=[
+      ['Active referrers',NUM(+s.active_referrers||0),'earned ≥1 reward','--brand'],
+      ['Referred conversions',NUM(+s.converted_referred||0),'referred users who paid','--paid'],
+      ['INR rewards paid',`₹${NUM(+s.inr_paid||0)}`,'total INR rewards','--mrr'],
+      ['USD rewards paid',`$${(+s.usd_paid||0).toFixed(2)}`,'total USD rewards','--sig'],
+    ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:18px">${v}</div><div class="c">${c}</div></div>`).join('');
+    if(affTh)affTh.innerHTML='<tr><th>Plan</th><th>Currency</th><th>Rewards</th><th>Referrers</th><th>Referred users</th><th>Total paid</th></tr>';
+    if(affTb)affTb.innerHTML=plans.map(r=>`<tr>
+      <td><b>${h(r.plan_key||'—')}</b></td>
+      <td>${h(r.currency||'—')}</td>
+      <td>${NUM(r.rewards)}</td>
+      <td>${NUM(r.referrers)}</td>
+      <td>${NUM(r.referred_users)}</td>
+      <td><b>${r.currency==='INR'?'₹':'$'}${(+r.total_amount||0).toFixed(r.currency==='USD'?2:0)}</b></td>
+    </tr>`).join('')||'<tr><td class="loadingcard" colspan="6">No rewards yet.</td></tr>';
+  }catch(e){if(affKpis)affKpis.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
+
+  /* ---- Referral engagement funnel (PostHog events) ---- */
+  await funnelInto('ref-funnel',[
+    {label:'Code field opened',   cond:"event='referral_code_field_open'",   color:'var(--vis)',  tip:'User opened the referral code input (referral_code_field_open).'},
+    {label:'Apply attempted',     cond:"event='referral_code_apply_attempt'",color:'var(--sig)',  tip:'User submitted a referral code (referral_code_apply_attempt).'},
+    {label:'Discount applied',    cond:"event='referral_discount_applied'",  color:'var(--act)',  tip:'Code was valid and discount applied (referral_discount_applied).'},
+    {label:'Referral purchase',   cond:"event='referral_purchase'",          color:'var(--paid)', tip:'Completed a purchase with referral (referral_purchase).'},
+    {label:'Reward granted',      cond:"event='referral_reward_granted'",    color:'var(--mrr)',  tip:'Referrer received their reward (referral_reward_granted).'},
+  ]);
 }
 
 const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals};
