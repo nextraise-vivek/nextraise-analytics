@@ -573,7 +573,7 @@ async function loadRevenueTiles(){
   try{
     const [rev,active]=await Promise.all([
       q(`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`),
-      q(`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`)
+      q(`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND s.plan!='free' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`)
     ]);
     renderRevenueTilesData(rev,active[0]||{});
   }catch(e){el.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
@@ -835,7 +835,7 @@ async function loadOverview(){
   // Fire postgres batch in background — does NOT block the overlay
   qBatch([
     {id:'rev',query:`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`},
-    {id:'active',query:`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`},
+    {id:'active',query:`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND s.plan!='free' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`},
   ]).then(pg=>{
     renderRevenueTilesData(batchGet(pg,'rev'),batchGet(pg,'active')[0]||{});
   }).catch(e=>{if(revEl)revEl.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;});
