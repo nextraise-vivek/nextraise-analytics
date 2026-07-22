@@ -126,7 +126,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
   .filter-extras{display:none;flex-wrap:wrap;gap:8px;width:100%}
   .filter-extras.open{display:flex}
   .kpis{grid-template-columns:repeat(2,1fr)}
-  #rev-grid{grid-template-columns:repeat(2,1fr)!important;}
+  #rev-grid,#inf-kpis{grid-template-columns:repeat(2,1fr)!important;}
   #ref-kpis{grid-template-columns:repeat(2,1fr)!important}
   .chartbox{height:180px}
   .apply{margin-left:0;width:100%}
@@ -165,6 +165,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
     <div class="nav-section">Growth</div>
     <a data-tab="lifecycle">✉️ Lifecycle</a>
     <a data-tab="referrals">🔗 Referrals</a>
+    <a data-tab="influencers">👥 Influencers</a>
     <div class="nav-section">Monitor</div>
     <a data-tab="features">🧩 Features</a>
     <a data-tab="dataquality">🛡️ Data Quality</a>
@@ -362,6 +363,35 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
           <span class="tip" data-tip="PostHog events: code_field_open → apply_attempt → discount_applied → purchase → reward_granted. Unique users per step in selected range.">i</span>
         </h3>
         <div class="funnel" id="ref-funnel"></div>
+      </div>
+    </section>
+
+    <!-- INFLUENCERS -->
+    <section data-panel="influencers" style="display:none">
+      <h2 class="tabh">👥 Influencers <span class="pg-badge">postgres</span></h2>
+      <div class="kpis" id="inf-kpis" style="grid-template-columns:repeat(5,1fr);margin-bottom:12px"></div>
+      <div class="card">
+        <h3>Influencer performance
+          <span class="tip" data-tip="Source: postgres.users. referred_by_id links who referred whom. Revenue = INR payments from postgres.payments by referred users (from May 1 2026).">i</span>
+          <span class="sub" id="inf-sub"></span>
+        </h3>
+        <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap">
+          <div class="fg"><label>Performance</label>
+            <select id="inf-perf">
+              <option value="all">All</option>
+              <option value="converted">Has Pro Conversions</option>
+              <option value="10plus">10+ Referrals</option>
+            </select>
+          </div>
+          <div class="fg"><label>Referral Code</label>
+            <select id="inf-code-f">
+              <option value="all">All</option>
+              <option value="has_code">Has Code</option>
+            </select>
+          </div>
+          <button id="inf-export" style="margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer;color:var(--muted)">⬇ Export CSV</button>
+        </div>
+        <table class="bd" id="inf-table"><thead></thead><tbody></tbody></table>
       </div>
     </section>
 
@@ -919,7 +949,96 @@ async function loadReferrals(){
   ]);
 }
 
-const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals};
+/* ===== INFLUENCERS ===== */
+let INF_DATA=[],infSort={col:'referrals',dir:-1};
+
+async function loadInfluencers(){
+  document.getElementById('inf-kpis').innerHTML='<div class="loadingcard">Loading…</div>';
+  const tb=document.querySelector('#inf-table tbody'),th=document.querySelector('#inf-table thead');
+  if(tb)tb.innerHTML='<tr><td class="loadingcard" colspan="7">Loading…</td></tr>';
+  try{
+    INF_DATA=await q(`
+      SELECT r.name AS name, r.email AS email, coalesce(r.referral_code,'') AS code,
+        count(u.id) AS referrals,
+        countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS pro_conversions,
+        round(coalesce(sum(pay.amount),0)) AS revenue_inr,
+        toString(max(toDate(u.created_at))) AS last_referral
+      FROM postgres.users r
+      INNER JOIN postgres.users u ON u.referred_by_id=r.id
+      LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' AND pay.created_at>='2026-05-01'
+      WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%'
+        AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in'
+      GROUP BY r.name, r.email, r.referral_code
+      HAVING referrals>0
+      ORDER BY referrals DESC LIMIT 200`);
+    renderInfluencers();
+    document.getElementById('inf-export').onclick=exportInfluencersCSV;
+    document.getElementById('inf-perf').onchange=renderInfluencers;
+    document.getElementById('inf-code-f').onchange=renderInfluencers;
+  }catch(e){
+    document.getElementById('inf-kpis').innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;
+    if(tb)tb.innerHTML=`<tr><td class="cardErr" colspan="7">⚠ ${e.message}</td></tr>`;
+  }
+}
+
+function renderInfluencers(){
+  const perf=document.getElementById('inf-perf').value;
+  const codeF=document.getElementById('inf-code-f').value;
+  let rows=[...INF_DATA].filter(r=>{
+    if(perf==='converted'&&+r.pro_conversions===0)return false;
+    if(perf==='10plus'&&+r.referrals<10)return false;
+    if(codeF==='has_code'&&!r.code)return false;
+    return true;
+  });
+  rows.sort((a,b)=>{const v=infSort.col;return(+a[v]<+b[v]?1:-1)*infSort.dir;});
+
+  const totalRefs=rows.reduce((s,r)=>s+(+r.referrals||0),0);
+  const totalConv=rows.reduce((s,r)=>s+(+r.pro_conversions||0),0);
+  const converting=rows.filter(r=>+r.pro_conversions>0).length;
+  const totalRev=rows.reduce((s,r)=>s+(+r.revenue_inr||0),0);
+  document.getElementById('inf-sub').textContent=`${rows.length} influencers`;
+  document.getElementById('inf-kpis').innerHTML=[
+    ['Total Referrals',NUM(totalRefs),'referred signups','--sig'],
+    ['Pro Conversions',NUM(totalConv),'referred → paid','--paid'],
+    ['Conv %',totalRefs>0?(totalConv/totalRefs*100).toFixed(1)+'%':'0%','referrals → paid','--act'],
+    ['Converting',NUM(converting),'w/ ≥1 pro conv','--brand'],
+    ['Revenue (INR)',`₹${NUM(totalRev)}`,'from referred users','--mrr'],
+  ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:${String(v).length>8?'16px':'20px'}">${v}</div><div class="c">${c}</div></div>`).join('');
+
+  const th=document.querySelector('#inf-table thead');
+  const tb=document.querySelector('#inf-table tbody');
+  const s=(col,lbl)=>`<th style="cursor:pointer" data-sc="${col}">${lbl} ${infSort.col===col?(infSort.dir<0?'▼':'▲'):'↕'}</th>`;
+  if(th)th.innerHTML=`<tr><th>Influencer</th><th>Code</th>${s('referrals','Referrals')}${s('pro_conversions','Pro Conv')}${s('revenue_inr','Revenue')}${s('last_referral','Last Referral')}</tr>`;
+  const mx=Math.max(...rows.map(r=>+r.referrals||0),1);
+  if(tb)tb.innerHTML=rows.map(r=>`<tr>
+    <td class="barcell"><div class="mini" style="width:${100*(+r.referrals||0)/mx}%"></div><span><b>${h(r.name||'—')}</b><br><span style="color:var(--muted);font-size:10.5px">${h(r.email||'')}</span></span></td>
+    <td>${r.code?`<code style="background:var(--chip);padding:2px 7px;border-radius:5px;font-size:11px">${h(r.code)}</code>`:'<span style="color:var(--muted)">—</span>'}</td>
+    <td><b>${NUM(r.referrals)}</b></td>
+    <td>${+r.pro_conversions>0?`<b style="color:var(--paid)">${NUM(r.pro_conversions)}</b>`:NUM(r.pro_conversions)}</td>
+    <td>${+r.revenue_inr>0?`<b>₹${NUM(r.revenue_inr)}</b>`:'—'}</td>
+    <td style="color:var(--muted);font-size:11px">${r.last_referral||'—'}</td>
+  </tr>`).join('')||`<tr><td class="loadingcard" colspan="6">No influencers match.</td></tr>`;
+  document.querySelectorAll('#inf-table thead th[data-sc]').forEach(t=>t.onclick=()=>{
+    const c=t.dataset.sc;infSort={col:c,dir:infSort.col===c?-infSort.dir:-1};renderInfluencers();
+  });
+}
+
+function exportInfluencersCSV(){
+  const rows=INF_DATA;
+  const hdr=['Name','Email','Referral Code','Referrals','Pro Conversions','Conv%','Revenue INR','Last Referral'];
+  const csv=[hdr.join(','),...rows.map(r=>[
+    `"${(r.name||'').replace(/"/g,'""')}"`,
+    `"${(r.email||'').replace(/"/g,'""')}"`,
+    `"${(r.code||'').replace(/"/g,'""')}"`,
+    r.referrals,r.pro_conversions,
+    (+r.referrals>0?(+r.pro_conversions/+r.referrals*100).toFixed(1):0)+'%',
+    r.revenue_inr,r.last_referral
+  ].join(','))].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='nextraise-influencers.csv';a.click();
+}
+
+const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals,influencers:loadInfluencers};
 
 /* ---------- orchestration ---------- */
 async function loadOverview(){
