@@ -340,6 +340,43 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
 .chat-sugs{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 4px}
 .chat-sug{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--ink);transition:background .1s}
 .chat-sug:hover{background:var(--chip)}
+/* --- Pro Users --- */
+.pu-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pu-plan-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:14px}
+.pu-plan-tab{border:none;background:none;padding:8px 14px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap}
+.pu-plan-tab:hover{color:var(--ink)}
+.pu-plan-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.pu-pill{border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);transition:background .12s,color .12s}
+.pu-pill.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pu-search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;color:var(--ink);background:var(--panel);outline:none;min-width:180px}
+.pu-search:focus{border-color:var(--brand)}
+.pu-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.pu-table th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--line);color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;white-space:nowrap}
+.pu-table th:not(:first-child){text-align:right}
+.pu-table td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:middle}
+.pu-table td:not(:first-child){text-align:right}
+.pu-table tr:hover td{background:var(--chip)}
+.pu-avatar{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.pu-user{display:flex;align-items:center;gap:8px;min-width:160px}
+.pu-user-info{display:flex;flex-direction:column;gap:1px}
+.pu-user-name{font-weight:600;font-size:12.5px;color:var(--ink)}
+.pu-user-email{font-size:10.5px;color:var(--muted)}
+.pu-badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.03em;color:#fff}
+.pu-badge-weekly{background:#f97316}
+.pu-badge-monthly{background:var(--brand)}
+.pu-badge-3month{background:#16a34a}
+.pu-badge-5month{background:#7c3aed}
+.pu-badge-other{background:var(--muted)}
+.pu-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600}
+.pu-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pu-status-active .pu-status-dot{background:#16a34a}
+.pu-status-active{color:#16a34a}
+.pu-status-expired .pu-status-dot{background:#dc2626}
+.pu-status-expired{color:#dc2626}
+.pu-status-other .pu-status-dot{background:var(--muted)}
+.pu-status-other{color:var(--muted)}
+.pu-export-btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 12px;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--ink);transition:background .12s}
+.pu-export-btn:hover{background:var(--chip)}
 </style>
 </head>
 <body>
@@ -366,6 +403,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
     <a data-tab="email"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="9" rx="1.5"/><path d="M2 7.5l6 3.5 6-3.5"/><rect x="15" y="9" width="2.5" height="5" rx=".5" fill="currentColor" stroke="none"/><rect x="13" y="7" width="2" height="7" rx=".5" fill="currentColor" stroke="none"/></svg> Emails</a>
     <a data-tab="referrals"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 11.5a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1.1 1.1"/><path d="M11.5 8.5a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1.1-1.1"/></svg> Referrals</a>
     <a data-tab="influencers"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="3"/><path d="M1 18a6 6 0 0112 0"/><path d="M14.5 5a2.5 2.5 0 010 5M18 18a5.5 5.5 0 00-5.5-5"/></svg> Influencers</a>
+    <a data-tab="prousers"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M14 4l1.5 1.5L18 3"/></svg> Pro Users</a>
     <div class="nav-section">Monitor</div>
     <a data-tab="features"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg> Features</a>
     <a data-tab="dataquality"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 5v5.5c0 4.5 3 7.5 7 8.5 4-1 7-4 7-8.5V5z"/><path d="M7 10.5l2.5 2.5 3.5-4"/></svg> Data Quality</a>
@@ -683,6 +721,50 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
         </div>
       </div>
     </div>
+
+    <!-- PRO USERS -->
+    <section data-panel="prousers" style="display:none">
+      <h2 class="tabh">👑 Pro Users <span class="pg-badge">postgres</span>
+        <button id="pu-refresh" class="btn" style="margin-left:10px;font-size:11px;padding:5px 12px">⟳ Refresh</button>
+      </h2>
+      <!-- Plan tabs -->
+      <div class="pu-plan-tabs" id="pu-plan-tabs">
+        <button class="pu-plan-tab active" data-plan="all">All</button>
+        <button class="pu-plan-tab" data-plan="Weekly">Weekly</button>
+        <button class="pu-plan-tab" data-plan="Monthly">Monthly</button>
+        <button class="pu-plan-tab" data-plan="3-Month">3-Month</button>
+        <button class="pu-plan-tab" data-plan="5-Month">5-Month</button>
+      </div>
+      <!-- Status + Search + Export row -->
+      <div class="pu-controls">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Status:</span>
+        <button class="pu-pill active" id="pu-st-all" data-status="all">All</button>
+        <button class="pu-pill" id="pu-st-active" data-status="active">Active</button>
+        <button class="pu-pill" id="pu-st-expired" data-status="expired">Expired</button>
+        <input class="pu-search" id="pu-search" type="search" placeholder="Search name or email…">
+        <button class="pu-export-btn" id="pu-export">⬇ Export CSV</button>
+      </div>
+      <!-- KPI tiles -->
+      <div class="kpis" id="pu-kpis" style="grid-template-columns:repeat(6,1fr);margin-bottom:16px"></div>
+      <!-- Table -->
+      <div class="card" style="overflow-x:auto;padding:0">
+        <table class="pu-table" id="pu-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding-left:14px">#</th>
+              <th style="text-align:left">User</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Amount Paid</th>
+              <th>Paid On</th>
+              <th>Expires</th>
+              <th>Referred By</th>
+            </tr>
+          </thead>
+          <tbody id="pu-tbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
     <!-- DATA QUALITY -->
     <section data-panel="dataquality" style="display:none">
@@ -2786,7 +2868,216 @@ function bindEmailControls(){
   };
 }
 
-const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,email:loadEmail,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals,influencers:loadInfluencers};
+/* ============================================================
+   PRO USERS
+   ============================================================ */
+const PU_STATE={plan:'all',status:'all',search:'',data:[]};
+let PU_BOUND=false;
+
+function planLabel(plan_key){
+  if(!plan_key)return 'Unknown';
+  const k=plan_key.toLowerCase();
+  if(k.includes('week')||k.includes('7'))return 'Weekly';
+  if((k.includes('month')||k.includes('mon'))&&!k.includes('3')&&!k.includes('5')&&!k.includes('quarter')&&!k.includes('tri')&&!k.includes('five'))return 'Monthly';
+  if(k.includes('quarter')||k.includes('tri')||(k.includes('3')&&(k.includes('month')||k.includes('mon')||k==='3')))return '3-Month';
+  if(k.includes('five')||(k.includes('5')&&(k.includes('month')||k.includes('mon')||k==='5')))return '5-Month';
+  return plan_key.charAt(0).toUpperCase()+plan_key.slice(1);
+}
+
+function planBadgeClass(label){
+  if(label==='Weekly')return 'pu-badge-weekly';
+  if(label==='Monthly')return 'pu-badge-monthly';
+  if(label==='3-Month')return 'pu-badge-3month';
+  if(label==='5-Month')return 'pu-badge-5month';
+  return 'pu-badge-other';
+}
+
+function puFilteredData(){
+  return PU_STATE.data.filter(r=>{
+    const lbl=planLabel(r.plan_key||'');
+    if(PU_STATE.plan!=='all'&&lbl!==PU_STATE.plan)return false;
+    const st=(r.sub_status||'').toLowerCase();
+    if(PU_STATE.status==='active'&&st!=='active')return false;
+    if(PU_STATE.status==='expired'&&st!=='expired')return false;
+    if(PU_STATE.search){
+      const q=PU_STATE.search.toLowerCase();
+      if(!(r.name||'').toLowerCase().includes(q)&&!(r.email||'').toLowerCase().includes(q))return false;
+    }
+    return true;
+  });
+}
+
+function renderProUsers(){
+  const rows=puFilteredData();
+  // KPIs
+  const total=rows.length;
+  const active=rows.filter(r=>(r.sub_status||'').toLowerCase()==='active').length;
+  const expired=rows.filter(r=>(r.sub_status||'').toLowerCase()==='expired').length;
+  const inrPayers=rows.filter(r=>(r.pay_currency||'').toUpperCase()==='INR').length;
+  const usdPayers=rows.filter(r=>(r.pay_currency||'').toUpperCase()==='USD').length;
+  const totalRev=rows.reduce((s,r)=>s+(+r.amount_inr||0),0);
+  const kpiDefs=[
+    {label:'Total Pro',val:NUM(total),sub:'all plans'},
+    {label:'Active',val:NUM(active),sub:'current subs',cls:'--paid'},
+    {label:'Expired',val:NUM(expired),sub:'lapsed',cls:'--warn'},
+    {label:'INR Payers',val:NUM(inrPayers),sub:'₹ transactions'},
+    {label:'USD Payers',val:NUM(usdPayers),sub:'$ transactions'},
+    {label:'Revenue (INR eq.)',val:`₹${NUM(Math.round(totalRev))}`,sub:`$1=₹${USD_INR}`,cls:'--brand'},
+  ];
+  document.getElementById('pu-kpis').innerHTML=kpiDefs.map(k=>`
+    <div class="kpi">
+      <div class="kpi-label">${h(k.label)}</div>
+      <div class="kpi-val" style="${k.cls?`color:var(${k.cls})`:''};">${h(k.val)}</div>
+      <div class="kpi-sub">${h(k.sub)}</div>
+    </div>`).join('');
+  // Table
+  const tbody=document.getElementById('pu-tbody');
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--muted)">No users match the current filter.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=rows.map((r,i)=>{
+    const col=avatarColor(r.email||r.name||'');
+    const ini=initials(r.name||r.email||'?');
+    const lbl=planLabel(r.plan_key||'');
+    const bdgCls=planBadgeClass(lbl);
+    const st=(r.sub_status||'').toLowerCase();
+    const stCls=st==='active'?'pu-status-active':st==='expired'?'pu-status-expired':'pu-status-other';
+    const stLabel=st?st.charAt(0).toUpperCase()+st.slice(1):'—';
+    const cur=(r.pay_currency||'').toUpperCase();
+    let amtHtml='—';
+    if(cur==='INR'&&r.last_inr&&+r.last_inr>0){
+      amtHtml=`₹${NUM(Math.round(+r.last_inr))}`;
+    } else if(cur==='USD'&&r.last_usd&&+r.last_usd>0){
+      const inrEq=Math.round(+r.last_usd*USD_INR);
+      amtHtml=`$${(+r.last_usd).toFixed(2)} <span style="font-size:10px;color:var(--muted)">(₹${NUM(inrEq)} eq.)</span>`;
+    } else if(+r.amount_inr>0){
+      amtHtml=`₹${NUM(Math.round(+r.amount_inr))}`;
+    }
+    const paidOn=r.paid_on||'—';
+    const expires=r.expires||'—';
+    const refBy=r.referred_by?h(r.referred_by):`<span style="color:var(--muted)">—</span>`;
+    return `<tr>
+      <td style="padding-left:14px;color:var(--muted);font-size:11px">${i+1}</td>
+      <td>
+        <div class="pu-user">
+          <span class="pu-avatar" style="background:${col}">${h(ini)}</span>
+          <div class="pu-user-info">
+            <span class="pu-user-name">${h(r.name||'—')}</span>
+            <span class="pu-user-email">${h(r.email||'')}</span>
+          </div>
+        </div>
+      </td>
+      <td><span class="pu-badge ${bdgCls}">${h(lbl)}</span></td>
+      <td><span class="pu-status ${stCls}"><span class="pu-status-dot"></span>${stLabel}</span></td>
+      <td>${amtHtml}</td>
+      <td style="white-space:nowrap">${h(paidOn)}</td>
+      <td style="white-space:nowrap">${h(expires)}</td>
+      <td style="font-size:11.5px">${refBy}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadProUsers(){
+  document.getElementById('pu-kpis').innerHTML='<div class="loadingcard">Loading…</div>';
+  document.getElementById('pu-tbody').innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Loading…</td></tr>`;
+
+  if(!PU_BOUND){
+    PU_BOUND=true;
+    // Plan tabs
+    document.getElementById('pu-plan-tabs').addEventListener('click',e=>{
+      const btn=e.target.closest('.pu-plan-tab');
+      if(!btn)return;
+      document.querySelectorAll('.pu-plan-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      PU_STATE.plan=btn.dataset.plan;
+      renderProUsers();
+    });
+    // Status pills
+    ['pu-st-all','pu-st-active','pu-st-expired'].forEach(id=>{
+      document.getElementById(id).addEventListener('click',()=>{
+        document.querySelectorAll('[id^="pu-st-"]').forEach(b=>b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        PU_STATE.status=document.getElementById(id).dataset.status;
+        renderProUsers();
+      });
+    });
+    // Search
+    document.getElementById('pu-search').addEventListener('input',e=>{
+      PU_STATE.search=e.target.value.trim();
+      renderProUsers();
+    });
+    // Refresh
+    document.getElementById('pu-refresh').addEventListener('click',async()=>{
+      PU_BOUND=false; // allow re-bind on next load
+      await loadProUsers();
+    });
+    // Export CSV
+    document.getElementById('pu-export').addEventListener('click',()=>{
+      const rows=puFilteredData();
+      const cols=['Name','Email','Phone','Plan','Status','Amount Paid (INR eq.)','Currency','Paid On','Expires','Referred By'];
+      const lines=[cols.join(',')];
+      rows.forEach(r=>{
+        const lbl=planLabel(r.plan_key||'');
+        const cur=(r.pay_currency||'').toUpperCase();
+        const amt=cur==='INR'?Math.round(+r.last_inr||0):cur==='USD'?Math.round((+r.last_usd||0)*USD_INR):Math.round(+r.amount_inr||0);
+        lines.push([
+          JSON.stringify(r.name||''),
+          JSON.stringify(r.email||''),
+          JSON.stringify(r.phone||''),
+          JSON.stringify(lbl),
+          JSON.stringify(r.sub_status||''),
+          amt,
+          JSON.stringify(cur),
+          JSON.stringify(r.paid_on||''),
+          JSON.stringify(r.expires||''),
+          JSON.stringify(r.referred_by||''),
+        ].join(','));
+      });
+      const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='pro_users.csv';a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  try{
+    const sql=`SELECT
+  u.id AS uid,
+  u.name,
+  u.email,
+  coalesce(u.phone,'') AS phone,
+  coalesce(s.plan_key,'') AS plan_key,
+  coalesce(s.status,'') AS sub_status,
+  toString(toDate(s.current_period_end)) AS expires,
+  toString(toDate(s.created_at)) AS subscribed_on,
+  round(sumIf(toFloat(p.amount), p.currency='INR') + sumIf(toFloat(p.amount)*${USD_INR}, p.currency='USD')) AS amount_inr,
+  anyIf(toString(toFloat(p.amount)), p.currency='INR' AND p.status='completed') AS last_inr,
+  anyIf(toString(toFloat(p.amount)), p.currency='USD' AND p.status='completed') AS last_usd,
+  anyIf(toString(toDate(p.created_at)), p.status='completed') AS paid_on,
+  anyIf(p.currency, p.status='completed') AS pay_currency,
+  coalesce(ref.name, ref.email, '') AS referred_by
+FROM postgres.subscriptions s
+INNER JOIN postgres.users u ON u.id = s.user_id
+LEFT JOIN postgres.payments p ON p.user_id = u.id AND p.status = 'completed'
+LEFT JOIN postgres.users ref ON ref.id = u.referred_by_id
+WHERE u.email NOT LIKE '%@nextraise.ai'
+  AND u.email NOT LIKE '%@creditdharma.in'
+  AND lower(u.email) NOT LIKE '%test%'
+GROUP BY u.id, u.name, u.email, u.phone, s.plan_key, s.status, s.current_period_end, s.created_at
+ORDER BY s.created_at DESC
+LIMIT 500`;
+    const data=await q(sql);
+    PU_STATE.data=data||[];
+    renderProUsers();
+  }catch(e){
+    document.getElementById('pu-tbody').innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--warn)">Error: ${h(e.message)}</td></tr>`;
+    document.getElementById('pu-kpis').innerHTML='';
+  }
+}
+
+const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,email:loadEmail,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals,influencers:loadInfluencers,prousers:loadProUsers};
 
 /* ---------- orchestration ---------- */
 async function loadOverview(){
