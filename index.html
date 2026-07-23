@@ -1576,16 +1576,33 @@ function renderInfluencers(){
         if(_rawPay.types){
           payTypes=_rawPay.types;
         } else if(_rawPay.type){
-          payTypes={commission:{enabled:_rawPay.type==='commission',rate:_rawPay.type==='commission'?(_rawPay.rate||10):10},performance:{enabled:_rawPay.type==='performance',rate:_rawPay.type==='performance'?(_rawPay.rate||100):100},fixed:{enabled:_rawPay.type==='fixed',rate:_rawPay.type==='fixed'?(_rawPay.rate||0):0}};
+          payTypes={commission:{enabled:_rawPay.type==='commission',rate:_rawPay.type==='commission'?(_rawPay.rate||10):10},performance:{enabled:_rawPay.type==='performance',rate:_rawPay.type==='performance'?(_rawPay.rate||100):100,metric:'pro_conversions',per:1},fixed:{enabled:_rawPay.type==='fixed',rate:_rawPay.type==='fixed'?(_rawPay.rate||0):0}};
         } else {
-          payTypes={commission:{enabled:false,rate:10},performance:{enabled:false,rate:100},fixed:{enabled:false,rate:0}};
+          payTypes={commission:{enabled:false,rate:10},performance:{enabled:false,rate:100,metric:'pro_conversions',per:1},fixed:{enabled:false,rate:0}};
         }
+        // Ensure performance has metric/per defaults
+        if(!payTypes.performance)payTypes.performance={enabled:false,rate:100,metric:'pro_conversions',per:1};
+        if(!payTypes.performance.metric)payTypes.performance.metric='pro_conversions';
+        if(!payTypes.performance.per)payTypes.performance.per=1;
         const savedCode=_rawPay.code||'';
         const socialSaved=infSocial()[rid]||{views:'',likes:'',shares:'',saves:'',comments:''};
+        const PERF_METRICS=[
+          {val:'pro_conversions',label:'Pro Conversions',qty:conv},
+          {val:'signups',label:'Signups (Referrals)',qty:+r.referrals||0},
+          {val:'views',label:'Views',qty:+socialSaved.views||0},
+          {val:'likes',label:'Likes',qty:+socialSaved.likes||0},
+          {val:'saves',label:'Saves',qty:+socialSaved.saves||0},
+          {val:'comments',label:'Comments',qty:+socialSaved.comments||0},
+        ];
+        const getPerfQty=(metric)=>(PERF_METRICS.find(m=>m.val===metric)||{qty:0}).qty;
         const calcMultiPay=(types)=>{
           let t=0;
           if(types.commission?.enabled)t+=Math.round((rev)*(+types.commission.rate||0)/100);
-          if(types.performance?.enabled)t+=Math.round((conv)*(+types.performance.rate||0));
+          if(types.performance?.enabled){
+            const qty=getPerfQty(types.performance.metric||'pro_conversions');
+            const per=Math.max(1,+types.performance.per||1);
+            t+=Math.floor(qty/per)*(+types.performance.rate||0);
+          }
           if(types.fixed?.enabled)t+=(+types.fixed.rate||0);
           return t;
         };
@@ -1601,6 +1618,12 @@ function renderInfluencers(){
               <span style="font-size:11px;color:var(--muted)">${hint}</span>
             </div>
           </div>`;
+        const perfEn=payTypes.performance.enabled;
+        const perfMetric=payTypes.performance.metric||'pro_conversions';
+        const perfPer=+payTypes.performance.per||1;
+        const perfRate=+payTypes.performance.rate||100;
+        const perfQty0=getPerfQty(perfMetric);
+        const perfPayout0=Math.floor(perfQty0/Math.max(1,perfPer))*perfRate;
         expand.innerHTML=
           `<div class="pay-calc" id="pc-${rid}">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
@@ -1610,9 +1633,30 @@ function renderInfluencers(){
             ${typeRow('commission','% Commission',`% of ₹${NUM(rev)} revenue (incl. renewals)`,
               `<input class="pay-rate-inp" id="pr-commission-${rid}" type="number" min="0" max="100" step="0.5" value="${payTypes.commission.rate||10}" placeholder="10">`,
               payTypes.commission.enabled)}
-            ${typeRow('performance','Performance Bonus',`₹ per Pro conversion · ${NUM(conv)} total conversions`,
-              `<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-performance-${rid}" type="number" min="0" step="1" value="${payTypes.performance.rate||100}" placeholder="100">`,
-              payTypes.performance.enabled)}
+            <div style="border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:8px;background:${perfEn?'#f0f9ff':'var(--panel)'};" id="ptr-performance-${rid}">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;margin:0">
+                <input type="checkbox" id="pck-performance-${rid}" ${perfEn?'checked':''} style="width:15px;height:15px;accent-color:var(--brand);cursor:pointer">
+                <span style="font-size:12px;font-weight:700;color:var(--fg)">Performance Bonus</span>
+              </label>
+              <div id="pinp-performance-${rid}" style="display:${perfEn?'flex':'none'};flex-direction:column;gap:8px;margin-top:10px;margin-left:23px">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">Based on</span>
+                  <select id="pm-metric-${rid}" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg)">
+                    ${PERF_METRICS.map(m=>`<option value="${m.val}"${m.val===perfMetric?' selected':''}>${m.label}</option>`).join('')}
+                  </select>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span>
+                  <input class="pay-rate-inp" id="pr-performance-${rid}" type="number" min="0" step="1" value="${perfRate}" placeholder="100" style="width:80px">
+                  <span style="font-size:11px;color:var(--muted)">per</span>
+                  <input class="pay-rate-inp" id="pm-per-${rid}" type="number" min="1" step="1" value="${perfPer}" placeholder="1" style="width:70px">
+                  <span style="font-size:11px;color:var(--muted)" id="pm-metric-lbl-${rid}">${(PERF_METRICS.find(m=>m.val===perfMetric)||{label:''}).label}</span>
+                </div>
+                <div style="font-size:11px;color:var(--muted)" id="pm-live-${rid}">
+                  ${perfQty0>0?`${NUM(perfQty0)} ${(PERF_METRICS.find(m=>m.val===perfMetric)||{label:''}).label.toLowerCase()} → <strong style="color:#16a34a">₹${NUM(perfPayout0)}</strong>`:`No ${(PERF_METRICS.find(m=>m.val===perfMetric)||{label:''}).label.toLowerCase()} data yet`}
+                </div>
+              </div>
+            </div>
             ${typeRow('fixed','Fixed Settlement',`one-time fixed amount`,
               `<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-fixed-${rid}" type="number" min="0" step="100" value="${payTypes.fixed.rate||0}" placeholder="5000">`,
               payTypes.fixed.enabled)}
@@ -1628,6 +1672,44 @@ function renderInfluencers(){
               <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap">Discount Code</span>
               <input id="dc-${rid}" type="text" placeholder="e.g. INFL_PRIYA20" value="${savedCode}" style="padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);width:160px">
               <span style="font-size:11px;color:var(--muted)">Users paying with this code get attributed to this influencer</span>
+            </div>
+          </div>
+          <div style="background:var(--chip);border-radius:9px;padding:10px 13px;margin-bottom:12px" id="bank-wrap-${rid}">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Payment Details</span>
+              <button id="bank-save-${rid}" class="social-save-btn" style="font-size:10px;padding:3px 10px">Save</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-wrap:wrap" class="bank-grid-${rid}">
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">UPI ID</div>
+                <input id="bank-upi-${rid}" type="text" placeholder="e.g. influencer@upi" value="${(infBankDetails()[rid]||{}).upi||''}" style="width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Account Number</div>
+                <input id="bank-acc-${rid}" type="text" placeholder="Bank account number" value="${(infBankDetails()[rid]||{}).account||''}" style="width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">IFSC Code</div>
+                <input id="bank-ifsc-${rid}" type="text" placeholder="e.g. HDFC0001234" value="${(infBankDetails()[rid]||{}).ifsc||''}" style="width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Account Name</div>
+                <input id="bank-name-${rid}" type="text" placeholder="Name on account" value="${(infBankDetails()[rid]||{}).name||''}" style="width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Video Go-Live Date</div>
+                <input id="bank-golive-${rid}" type="date" value="${(infBankDetails()[rid]||{}).golive||r.go_live_date||''}" style="width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Payment Method</div>
+                <select id="bank-method-${rid}" style="width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg)">
+                  <option value=""${!(infBankDetails()[rid]||{}).method?' selected':''}>— Select —</option>
+                  <option value="upi"${(infBankDetails()[rid]||{}).method==='upi'?' selected':''}>UPI</option>
+                  <option value="bank"${(infBankDetails()[rid]||{}).method==='bank'?' selected':''}>Bank Transfer</option>
+                  <option value="cash"${(infBankDetails()[rid]||{}).method==='cash'?' selected':''}>Cash</option>
+                  <option value="other"${(infBankDetails()[rid]||{}).method==='other'?' selected':''}>Other</option>
+                </select>
+              </div>
             </div>
           </div>
           <div style="background:var(--chip);border-radius:9px;padding:10px 13px;margin-bottom:12px" id="ph-wrap-${rid}">
@@ -1697,13 +1779,40 @@ function renderInfluencers(){
             TYPES.forEach(k=>{
               const ck=document.getElementById(`pck-${k}-${rid}`);
               const inp=document.getElementById(`pr-${k}-${rid}`);
-              t[k]={enabled:ck?ck.checked:false,rate:inp?+inp.value||0:0};
+              if(k==='performance'){
+                const metricSel=document.getElementById(`pm-metric-${rid}`);
+                const perInp=document.getElementById(`pm-per-${rid}`);
+                t[k]={enabled:ck?ck.checked:false,rate:inp?+inp.value||0:0,
+                  metric:metricSel?metricSel.value:'pro_conversions',
+                  per:perInp?Math.max(1,+perInp.value||1):1};
+              } else {
+                t[k]={enabled:ck?ck.checked:false,rate:inp?+inp.value||0:0};
+              }
             });
             return t;
+          };
+          const refreshPerfLive=()=>{
+            const metricSel=document.getElementById(`pm-metric-${rid}`);
+            const perInp=document.getElementById(`pm-per-${rid}`);
+            const rateInp=document.getElementById(`pr-performance-${rid}`);
+            const liveEl=document.getElementById(`pm-live-${rid}`);
+            const lblEl=document.getElementById(`pm-metric-lbl-${rid}`);
+            if(!metricSel||!liveEl)return;
+            const metric=metricSel.value;
+            const m=PERF_METRICS.find(x=>x.val===metric)||{label:'',qty:0};
+            const per=Math.max(1,+perInp?.value||1);
+            const rate=+rateInp?.value||0;
+            const qty=m.qty;
+            const out=Math.floor(qty/per)*rate;
+            if(lblEl)lblEl.textContent=m.label;
+            liveEl.innerHTML=qty>0
+              ?`${NUM(qty)} ${m.label.toLowerCase()} → <strong style="color:#16a34a">₹${NUM(out)}</strong>`
+              :`No ${m.label.toLowerCase()} data yet`;
           };
           const refreshPayout=()=>{
             const po=document.getElementById(`po-${rid}`);
             if(po)po.textContent='₹'+NUM(calcMultiPay(getCurTypes()));
+            refreshPerfLive();
           };
           const setLocked=(locked)=>{
             TYPES.forEach(k=>{
@@ -1712,6 +1821,11 @@ function renderInfluencers(){
               if(ck){ck.disabled=locked;ck.style.opacity=locked?'0.6':'1';ck.style.cursor=locked?'not-allowed':'pointer';}
               if(inp){inp.disabled=locked;inp.style.opacity=locked?'0.6':'1';}
             });
+            // Performance extra inputs
+            const metricSel=document.getElementById(`pm-metric-${rid}`);
+            const perInp=document.getElementById(`pm-per-${rid}`);
+            if(metricSel){metricSel.disabled=locked;metricSel.style.opacity=locked?'0.6':'1';}
+            if(perInp){perInp.disabled=locked;perInp.style.opacity=locked?'0.6':'1';}
             const dc=document.getElementById(`dc-${rid}`);
             if(dc){dc.disabled=locked;dc.style.opacity=locked?'0.6':'1';}
             const saveBtn=document.getElementById(`pay-save-${rid}`);
@@ -1735,6 +1849,9 @@ function renderInfluencers(){
             }
             if(inp)inp.addEventListener('input',refreshPayout);
           });
+          // Performance-specific: metric dropdown + per input
+          document.getElementById(`pm-metric-${rid}`)?.addEventListener('change',refreshPayout);
+          document.getElementById(`pm-per-${rid}`)?.addEventListener('input',refreshPayout);
           // Save button → lock
           document.getElementById(`pay-save-${rid}`)?.addEventListener('click',()=>{
             const types=getCurTypes();
@@ -1774,6 +1891,18 @@ function renderInfluencers(){
             const btn=document.getElementById(`ph-add-${rid}`);
             if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='+ Record Payment';btn.style.background='';},1500);}
           }
+        });
+        // Wire up bank/UPI save button
+        document.getElementById(`bank-save-${rid}`)?.addEventListener('click',()=>{
+          const upi=(document.getElementById(`bank-upi-${rid}`)?.value||'').trim();
+          const account=(document.getElementById(`bank-acc-${rid}`)?.value||'').trim();
+          const ifsc=(document.getElementById(`bank-ifsc-${rid}`)?.value||'').trim();
+          const name=(document.getElementById(`bank-name-${rid}`)?.value||'').trim();
+          const golive=document.getElementById(`bank-golive-${rid}`)?.value||'';
+          const method=document.getElementById(`bank-method-${rid}`)?.value||'';
+          saveInfBank(rid,{upi,account,ifsc,name,golive,method});
+          const btn=document.getElementById(`bank-save-${rid}`);
+          if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='Save';btn.style.background='';},1500);}
         });
         // Wire up social save button
         document.getElementById(`ss-${rid}`)?.addEventListener('click',()=>{
@@ -1815,6 +1944,8 @@ function infPaySettings(){try{return JSON.parse(localStorage.getItem('inf_pay_v1
 function saveInfPay(rid,obj){const d=infPaySettings();d[rid]=obj;localStorage.setItem('inf_pay_v1',JSON.stringify(d));}
 function infSocial(){try{return JSON.parse(localStorage.getItem('inf_social_v1')||'{}')}catch{return {}}}
 function saveInfSocial(rid,obj){const d=infSocial();d[rid]=obj;localStorage.setItem('inf_social_v1',JSON.stringify(d));}
+function infBankDetails(){try{return JSON.parse(localStorage.getItem('inf_bank_v1')||'{}')}catch{return {}}}
+function saveInfBank(rid,obj){const d=infBankDetails();d[rid]=obj;localStorage.setItem('inf_bank_v1',JSON.stringify(d));}
 function infPayHistory(){try{return JSON.parse(localStorage.getItem('inf_pay_hist_v1')||'{}')}catch{return {}}}
 function addInfPayment(rid,amount,note){
   const d=infPayHistory();
@@ -1834,11 +1965,21 @@ function renderPaymentsTab(){
   const ridMap=new Map((INF_DATA||[]).map(r=>[r.referrer_id||'',r]));
 
   // Helper: calculate owed amount from multi-type settings
-  const calcOwed=(set,rev,conv)=>{
+  const calcOwed=(set,rev,conv,inf)=>{
     const types=set.types||{};
+    const social=infSocial()[(inf?.referrer_id||'')]||{};
+    const getQty=(metric)=>{
+      if(metric==='pro_conversions')return conv;
+      if(metric==='signups')return +inf?.referrals||0;
+      return +social[metric]||0;
+    };
     let t=0;
     if(types.commission?.enabled)t+=Math.round(rev*(+types.commission.rate||0)/100);
-    if(types.performance?.enabled)t+=Math.round(conv*(+types.performance.rate||0));
+    if(types.performance?.enabled){
+      const metric=types.performance.metric||'pro_conversions';
+      const per=Math.max(1,+types.performance.per||1);
+      t+=Math.floor(getQty(metric)/per)*(+types.performance.rate||0);
+    }
     if(types.fixed?.enabled)t+=(+types.fixed.rate||0);
     // backward compat
     if(!Object.values(types).some(x=>x.enabled)&&set.type){
@@ -1866,7 +2007,7 @@ function renderPaymentsTab(){
     const set=settings[rid]||{};
     const rev=+inf.revenue_inr||0;
     const conv=+inf.pro_conversions||0;
-    const owed=calcOwed(set,rev,conv);
+    const owed=calcOwed(set,rev,conv,inf);
     const balance=owed-totalPaid;
     const payCount=payments.length;
     const lastDate=payments[0]?.date||'';
