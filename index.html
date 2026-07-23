@@ -1949,11 +1949,14 @@ async function fetchPHEmailData(){
   try{
     const mainSQL=`SELECT coalesce(nullIf(properties.campaign_id,''),nullIf(properties.loop_id,''),'(noid)') AS id, coalesce(nullIf(anyIf(properties.campaign_name,event='email_sent'),''),nullIf(anyIf(properties.loop_name,event='email_sent'),''),id) AS campaign, anyIf(properties.email_channel,event='email_sent') AS channel, countIf(event='email_sent') AS sent, countIf(event='email_delivered') AS delivered, uniqIf(person_id,event='email_opened') AS opens, countIf(event='email_bounced') AS bounces, countIf(event='email_unsubscribed') AS unsubs, countIf(event='email_banner_viewed') AS banner_views, maxIf(timestamp,event='email_sent') AS last_sent, minIf(timestamp,event='email_sent') AS first_sent FROM events WHERE event IN ('email_sent','email_delivered','email_opened','email_bounced','email_unsubscribed','email_banner_viewed') AND (nullIf(properties.campaign_id,'') IS NOT NULL OR nullIf(properties.loop_id,'') IS NOT NULL) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%' GROUP BY id HAVING sent>0 ORDER BY last_sent DESC LIMIT 200`;
     const clickSQL=`SELECT s.cid AS id, uniq(c.person_id) AS clicks FROM (SELECT person_id, coalesce(nullIf(properties.campaign_id,''),nullIf(properties.loop_id,'')) AS cid, timestamp AS sent_at FROM events WHERE event='email_sent' AND (nullIf(properties.campaign_id,'') IS NOT NULL OR nullIf(properties.loop_id,'') IS NOT NULL) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%') s LEFT JOIN (SELECT person_id, timestamp AS click_ts FROM events WHERE event IN ('email_clicked','$workflows_email_link_clicked')) c ON s.person_id=c.person_id AND c.click_ts>=s.sent_at AND c.click_ts<=s.sent_at+INTERVAL 30 DAY GROUP BY id HAVING clicks>0`;
-    const batch=await qBatch([{id:'main',query:mainSQL},{id:'clicks',query:clickSQL}]);
+    const convSQL=`SELECT s.cid AS id, uniq(c.person_id) AS conversions FROM (SELECT person_id, coalesce(nullIf(properties.campaign_id,''),nullIf(properties.loop_id,'')) AS cid, timestamp AS sent_at FROM events WHERE event='email_sent' AND (nullIf(properties.campaign_id,'') IS NOT NULL OR nullIf(properties.loop_id,'') IS NOT NULL) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%') s LEFT JOIN (SELECT person_id, timestamp AS conv_ts FROM events WHERE event='payment_completed') c ON s.person_id=c.person_id AND c.conv_ts>=s.sent_at AND c.conv_ts<=s.sent_at+INTERVAL 30 DAY GROUP BY id HAVING conversions>0`;
+    const batch=await qBatch([{id:'main',query:mainSQL},{id:'clicks',query:clickSQL},{id:'conv',query:convSQL}]);
     const mainRows=batchGet(batch,'main');
     const clickRows=batchGet(batch,'clicks');
+    const convRows=batchGet(batch,'conv');
     const clickMap=new Map(clickRows.map(r=>[r.id,+r.clicks||0]));
-    return mainRows.map(r=>({...r,clicks:clickMap.get(r.id)||0}));
+    const convMap=new Map(convRows.map(r=>[r.id,+r.conversions||0]));
+    return mainRows.map(r=>({...r,clicks:clickMap.get(r.id)||0,conversions:convMap.get(r.id)||0}));
   }catch{return [];}
 }
 
@@ -2171,31 +2174,35 @@ async function expandEmailRow(c,expand){
   if(recipEl&&campId){
     try{
       // Include $workflows_email_link_clicked via person_id subquery since it carries no campaign_id/loop_id
-      const recips=await q(`SELECT any(person.properties.email) AS email, any(coalesce(nullIf(person.properties.$name,''),nullIf(person.properties.name,''))) AS name, maxIf(1,event='email_delivered') AS delivered, maxIf(1,event='email_opened') AS opened, maxIf(1,event IN ('email_clicked','$workflows_email_link_clicked')) AS clicked FROM events WHERE ((${idFilter} AND event IN ('email_sent','email_delivered','email_opened','email_bounced','email_clicked')) OR (event='$workflows_email_link_clicked' AND person_id IN (SELECT DISTINCT person_id FROM events WHERE event='email_sent' AND ${idFilter}))) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%' GROUP BY person_id ORDER BY opened DESC, clicked DESC LIMIT 200`);
+      const recips=await q(`SELECT any(person.properties.email) AS email, any(coalesce(nullIf(person.properties.$name,''),nullIf(person.properties.name,''))) AS name, maxIf(1,event='email_delivered') AS delivered, maxIf(1,event='email_opened') AS opened, maxIf(1,event IN ('email_clicked','$workflows_email_link_clicked')) AS clicked, maxIf(1,event='payment_completed') AS converted FROM events WHERE ((${idFilter} AND event IN ('email_sent','email_delivered','email_opened','email_bounced','email_clicked')) OR (event='$workflows_email_link_clicked' AND person_id IN (SELECT DISTINCT person_id FROM events WHERE event='email_sent' AND ${idFilter})) OR (event='payment_completed' AND person_id IN (SELECT DISTINCT person_id FROM events WHERE event='email_sent' AND ${idFilter}))) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%' GROUP BY person_id ORDER BY converted DESC, opened DESC, clicked DESC LIMIT 200`);
       expand.dataset.loaded='1';
       if(!recips.length){recipEl.innerHTML='<div class="loadingcard">No recipient data in PostHog for this campaign.</div>';return;}
       const opCt=recips.filter(r=>+r.opened).length;
       const clCt=recips.filter(r=>+r.clicked).length;
+      const convCt=recips.filter(r=>+r.converted).length;
       recipEl.innerHTML=`<div style="display:flex;align-items:center;gap:14px;font-size:12px;margin-bottom:10px;flex-wrap:wrap">
         <span style="font-weight:700">${recips.length} recipients in PostHog</span>
         <span style="color:var(--paid)">● ${opCt} opened</span>
         <span style="color:var(--ret)">● ${clCt} clicked</span>
+        ${convCt>0?`<span style="color:#16a34a;font-weight:700">● ${convCt} converted to Pro</span>`:''}
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr style="color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line)">
           <th style="text-align:left;padding:4px 8px 4px 0">Recipient</th>
           <th style="text-align:center;padding:4px 8px">Deliv.</th>
           <th style="text-align:center;padding:4px 8px">Opened</th>
-          <th style="text-align:center;padding:4px 0 4px 8px">Clicked</th>
+          <th style="text-align:center;padding:4px 8px">Clicked</th>
+          <th style="text-align:center;padding:4px 0 4px 8px">Paid</th>
         </tr></thead>
-        <tbody>${recips.map(r=>{const uc=avatarColor(r.email||'');return`<tr style="border-bottom:1px solid var(--chip)">
+        <tbody>${recips.map(r=>{const uc=avatarColor(r.email||'');return`<tr style="border-bottom:1px solid var(--chip)${+r.converted?';background:#f0fdf4':''}">
           <td style="padding:6px 8px 6px 0"><div style="display:flex;align-items:center;gap:7px">
             <div style="width:24px;height:24px;border-radius:50%;background:${uc};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;flex:0 0 24px">${initials(r.name||'')}</div>
             <div><div style="font-weight:600;font-size:12px">${h(r.name||'—')}</div><div style="color:var(--muted);font-size:10px">${h(r.email||'')}</div></div>
           </div></td>
           <td style="text-align:center;padding:6px 8px">${+r.delivered?'<span style="color:var(--sig)">✓</span>':'—'}</td>
           <td style="text-align:center;padding:6px 8px">${+r.opened?'<span style="color:var(--paid);font-weight:700">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
-          <td style="text-align:center;padding:6px 0 6px 8px">${+r.clicked?'<span style="color:var(--ret);font-weight:700">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+          <td style="text-align:center;padding:6px 8px">${+r.clicked?'<span style="color:var(--ret);font-weight:700">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+          <td style="text-align:center;padding:6px 0 6px 8px">${+r.converted?'<span style="color:#16a34a;font-weight:800">₹</span>':'<span style="color:var(--muted)">—</span>'}</td>
         </tr>`}).join('')}</tbody>
       </table>`;
     }catch(e){
