@@ -1809,57 +1809,92 @@ function calcInfPay(type,rate,rev,conv){
 function renderPaymentsTab(){
   const hist=infPayHistory();
   const settings=infPaySettings();
-  // Build rows: one per influencer who has payment history
-  const paidRids=Object.keys(hist).filter(rid=>hist[rid]&&hist[rid].length>0);
-  // Map rid → influencer data
   const ridMap=new Map((INF_DATA||[]).map(r=>[r.referrer_id||'',r]));
 
-  // Also include rids that exist in settings but not in INF_DATA (edge case)
-  const allRids=[...new Set([...paidRids,...Object.keys(settings)])].filter(rid=>rid);
+  // Helper: calculate owed amount from multi-type settings
+  const calcOwed=(set,rev,conv)=>{
+    const types=set.types||{};
+    let t=0;
+    if(types.commission?.enabled)t+=Math.round(rev*(+types.commission.rate||0)/100);
+    if(types.performance?.enabled)t+=Math.round(conv*(+types.performance.rate||0));
+    if(types.fixed?.enabled)t+=(+types.fixed.rate||0);
+    // backward compat
+    if(!Object.values(types).some(x=>x.enabled)&&set.type){
+      if(set.type==='commission')t=Math.round(rev*(+set.rate||0)/100);
+      else if(set.type==='performance')t=Math.round(conv*(+set.rate||0));
+      else t=+set.rate||0;
+    }
+    return t;
+  };
 
-  const payRows=allRids.map(rid=>{
+  // Include influencers who have settings configured OR have payment history
+  const candidateRids=[...new Set([
+    ...Object.keys(settings).filter(rid=>{
+      const s=settings[rid]||{};
+      const types=s.types||{};
+      return Object.values(types).some(x=>x.enabled)||(s.type&&s.rate);
+    }),
+    ...Object.keys(hist).filter(rid=>hist[rid]?.length>0),
+  ])].filter(rid=>rid);
+
+  const payRows=candidateRids.map(rid=>{
     const inf=ridMap.get(rid)||{};
     const payments=hist[rid]||[];
     const totalPaid=payments.reduce((s,p)=>s+(+p.amount||0),0);
-    const lastDate=payments[0]?.date||'';
+    const set=settings[rid]||{};
+    const rev=+inf.revenue_inr||0;
+    const conv=+inf.pro_conversions||0;
+    const owed=calcOwed(set,rev,conv);
+    const balance=owed-totalPaid;
     const payCount=payments.length;
-    const set=settings[rid]||{};
-    return {rid,inf,payments,totalPaid,lastDate,payCount,type:set.type||'',rate:set.rate||'',code:set.code||''};
-  }).filter(r=>r.payCount>0).sort((a,b)=>b.totalPaid-a.totalPaid);
-
-  const grandTotal=payRows.reduce((s,r)=>s+r.totalPaid,0);
-  const totalCount=payRows.reduce((s,r)=>s+r.payCount,0);
-
-  const kpis=document.getElementById('inf-kpis');
-  if(kpis)kpis.innerHTML=[
-    ['Paid Influencers',NUM(payRows.length),'with payment history','--brand'],
-    ['Total Payments',NUM(totalCount),'payment entries','--sig'],
-    ['Total Paid Out',`₹${NUM(grandTotal)}`,'sum of all payments','--paid'],
-    ['Avg per Influencer',payRows.length?`₹${NUM(Math.round(grandTotal/payRows.length))}`:'₹0','avg payout','--act'],
-  ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:${String(v).length>8?'16px':'20px'}">${v}</div><div class="c">${c}</div></div>`).join('');
-
-  document.getElementById('inf-sub').innerHTML=`${payRows.length} influencer${payRows.length!==1?'s':''} with recorded payments`;
-
-  const list=document.getElementById('inf-list');
-  if(!payRows.length){
-    list.innerHTML='<div class="loadingcard" style="color:var(--muted);text-align:center;padding:32px">No payments recorded yet.<br><span style="font-size:12px">Open any influencer and use + Record Payment to log one.</span></div>';
-    return;
-  }
-
-  list.innerHTML=payRows.map((row,i)=>{
-    const {rid,inf,payments,totalPaid,lastDate,payCount,code}=row;
-    const set=settings[rid]||{};
-    const col=avatarColor(inf.email||inf.name||rid||'');
-    const plat=(inf.platform||'').toLowerCase();
-    const igBadge=plat==='instagram'?`<span class="inf-ig-badge">📸 Instagram</span>`:plat==='twitter'?`<span class="inf-ig-badge" style="background:#e7f3ff;color:#1d9bf0">🐦 Twitter</span>`:'';
+    const lastDate=payments[0]?.date||'';
+    const code=set.code||'';
     const multiTypes=set.types||{};
     const typeParts=[];
     if(multiTypes.commission?.enabled)typeParts.push(`${multiTypes.commission.rate||0}% comm`);
     if(multiTypes.performance?.enabled)typeParts.push(`₹${multiTypes.performance.rate||0}/conv`);
     if(multiTypes.fixed?.enabled)typeParts.push(`Fixed ₹${multiTypes.fixed.rate||0}`);
     if(!typeParts.length&&set.type)typeParts.push(set.type==='commission'?`${set.rate||0}% comm`:set.type==='performance'?`₹${set.rate||0}/conv`:`Fixed ₹${set.rate||0}`);
+    return {rid,inf,payments,totalPaid,owed,balance,payCount,lastDate,code,typeParts};
+  }).sort((a,b)=>b.balance-a.balance);
+
+  const grandOwed=payRows.reduce((s,r)=>s+r.owed,0);
+  const grandPaid=payRows.reduce((s,r)=>s+r.totalPaid,0);
+  const grandBalance=grandOwed-grandPaid;
+  const unpaidCt=payRows.filter(r=>r.totalPaid===0&&r.owed>0).length;
+
+  const kpis=document.getElementById('inf-kpis');
+  if(kpis)kpis.innerHTML=[
+    ['To Pay',NUM(payRows.filter(r=>r.balance>0).length),'influencers with balance due','--warn'],
+    ['Total Owed',`₹${NUM(grandOwed)}`,'calculated from settings','--sig'],
+    ['Total Paid Out',`₹${NUM(grandPaid)}`,'sum of recorded payments','--paid'],
+    ['Balance Due',`₹${NUM(Math.max(0,grandBalance))}`,'owed − paid','--brand'],
+  ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:${String(v).length>8?'16px':'20px'}">${v}</div><div class="c">${c}</div></div>`).join('');
+
+  document.getElementById('inf-sub').innerHTML=`${payRows.length} influencer${payRows.length!==1?'s':''} with payment settings · ${unpaidCt} yet to be paid`;
+
+  const list=document.getElementById('inf-list');
+  if(!payRows.length){
+    list.innerHTML='<div class="loadingcard" style="color:var(--muted);text-align:center;padding:32px">No payment settings configured yet.<br><span style="font-size:12px">Open any influencer, set a payment type, and save.</span></div>';
+    return;
+  }
+
+  list.innerHTML=payRows.map((row,i)=>{
+    const {rid,inf,payments,totalPaid,owed,balance,payCount,lastDate,code,typeParts}=row;
+    const col=avatarColor(inf.email||inf.name||rid||'');
+    const plat=(inf.platform||'').toLowerCase();
+    const igBadge=plat==='instagram'?`<span class="inf-ig-badge">📸 Instagram</span>`:plat==='twitter'?`<span class="inf-ig-badge" style="background:#e7f3ff;color:#1d9bf0">🐦 Twitter</span>`:'';
     const typeBadge=typeParts.length?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">${typeParts.join(' + ')}</span>`:'';
     const codeBadge=code?`<span class="inf-codebd" style="background:${col}22;color:${col}">${h(code)}</span>`:'';
+    const isPaid=totalPaid>0&&balance<=0;
+    const isUnpaid=totalPaid===0&&owed>0;
+    const statusBadge=isPaid
+      ?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">✓ Paid</span>`
+      :isUnpaid
+      ?`<span style="background:#fff7ed;color:#d97706;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">⚠ Unpaid</span>`
+      :balance>0
+      ?`<span style="background:#fef2f2;color:#dc2626;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">⬤ Balance ₹${NUM(balance)}</span>`
+      :'';
     const histRows=payments.map(p=>`<tr>
       <td style="padding:5px 10px;font-size:12px;color:var(--muted)">${p.date||'—'}</td>
       <td style="padding:5px 10px;font-size:13px;font-weight:700;color:#16a34a">₹${NUM(+p.amount||0)}</td>
@@ -1870,34 +1905,42 @@ function renderPaymentsTab(){
         <span class="inf-rank">${i+1}</span>
         <div class="inf-avatar" style="background:${col}">${initials(inf.name||'')}</div>
         <div class="inf-nameblk">
-          <div class="inf-nameline">${h(inf.name||rid)}${igBadge}${typeBadge}${codeBadge}</div>
+          <div class="inf-nameline">${h(inf.name||inf.email||rid)}${igBadge}${typeBadge}${codeBadge}${statusBadge}</div>
           <div class="inf-emailline">${h(inf.email||rid)}</div>
         </div>
         <div class="inf-stats">
-          <div class="inf-stat"><div class="sv" style="color:#16a34a">₹${NUM(totalPaid)}</div><div class="sl">Total Paid</div></div>
-          <div class="inf-stat"><div class="sv">${payCount}</div><div class="sl">Payments</div></div>
+          <div class="inf-stat"><div class="sv" style="color:var(--brand)">₹${NUM(owed)}</div><div class="sl">Owed</div></div>
+          <div class="inf-stat"><div class="sv" style="color:#16a34a">₹${NUM(totalPaid)}</div><div class="sl">Paid</div></div>
+          <div class="inf-stat"><div class="sv" style="color:${balance>0?'#dc2626':'var(--muted)'}">₹${NUM(Math.max(0,balance))}</div><div class="sl">Balance</div></div>
           <div class="inf-stat"><div class="sv">${lastDate||'—'}</div><div class="sl">Last Paid</div></div>
-          <div class="inf-stat"><div class="sv" style="color:var(--paid)">${NUM(inf.pro_conversions||0)}</div><div class="sl">Conversions</div></div>
         </div>
         <span class="inf-chev">▼</span>
       </div>
-      <div class="inf-expand pay-tab-exp" id="pexp-${i}" style="display:none;padding:10px 14px 12px">
-        <table style="width:100%;border-collapse:collapse">
+      <div class="inf-expand pay-tab-exp" id="pexp-${i}" style="display:none;padding:10px 14px 14px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:10px 12px;background:#f8faff;border:1px solid #dbeafe;border-radius:8px">
+          <span style="font-size:11px;font-weight:700;color:var(--muted)">₹</span>
+          <input id="ptamt-${i}" type="number" min="0" placeholder="Amount" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-weight:600;background:var(--panel);color:var(--fg);width:110px">
+          <input id="ptnote-${i}" type="text" placeholder="Note (e.g. Jul 2026 commission)" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);flex:1;min-width:160px">
+          <button class="social-save-btn pt-rec-btn" data-pi="${i}" data-rid="${rid}" style="white-space:nowrap">+ Record Payment</button>
+          ${owed>0?`<button class="social-save-btn pt-full-btn" data-pi="${i}" data-rid="${rid}" data-amt="${Math.max(0,balance)}" style="background:#1d4ed8;white-space:nowrap">Pay ₹${NUM(Math.max(0,balance))} (balance)</button>`:''}
+        </div>
+        ${payments.length?`<table style="width:100%;border-collapse:collapse">
           <thead><tr>
             <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Date</th>
             <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Amount</th>
             <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Note</th>
           </tr></thead>
-          <tbody>${histRows}</tbody>
+          <tbody id="phist-${i}">${histRows}</tbody>
           <tfoot><tr>
-            <td colspan="2" style="padding:6px 10px;font-size:12px;font-weight:700;color:var(--muted);border-top:1px solid var(--line)">Total</td>
-            <td style="padding:6px 10px;font-size:14px;font-weight:800;color:#16a34a;border-top:1px solid var(--line)">₹${NUM(totalPaid)}</td>
+            <td colspan="2" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--muted);border-top:1px solid var(--line)">Total paid</td>
+            <td style="padding:6px 10px;font-size:13px;font-weight:800;color:#16a34a;border-top:1px solid var(--line)" id="phist-total-${i}">₹${NUM(totalPaid)}</td>
           </tr></tfoot>
-        </table>
+        </table>`:`<div style="color:var(--muted);font-size:12px;padding:8px 10px">No payments recorded yet for this influencer.</div>`}
       </div>
     </div>`;
   }).join('');
 
+  // Toggle expand
   list.querySelectorAll('.pay-tab-row').forEach((row,i)=>{
     row.onclick=()=>{
       const exp=document.getElementById(`pexp-${i}`);
@@ -1905,6 +1948,31 @@ function renderPaymentsTab(){
       const open=exp.style.display==='none';
       exp.style.display=open?'block':'none';
       if(chev)chev.textContent=open?'▲':'▼';
+    };
+  });
+
+  // Record Payment button
+  const recordPay=(pi,rid,amt,note)=>{
+    if(!amt){alert('Enter an amount.');return;}
+    addInfPayment(rid,amt,note);
+    renderPaymentsTab(); // re-render to update totals
+  };
+  list.querySelectorAll('.pt-rec-btn').forEach(btn=>{
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const pi=+btn.dataset.pi,rid=btn.dataset.rid;
+      const amt=+document.getElementById(`ptamt-${pi}`)?.value||0;
+      const note=(document.getElementById(`ptnote-${pi}`)?.value||'').trim();
+      recordPay(pi,rid,amt,note);
+    };
+  });
+  // Pay balance shortcut
+  list.querySelectorAll('.pt-full-btn').forEach(btn=>{
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const pi=+btn.dataset.pi,rid=btn.dataset.rid,amt=+btn.dataset.amt;
+      const note=(document.getElementById(`ptnote-${pi}`)?.value||'').trim()||'Balance payment';
+      recordPay(pi,rid,amt,note);
     };
   });
 }
