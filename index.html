@@ -728,8 +728,15 @@ const state={rangeMode:'7:DAY',amount:7,unit:'DAY',customFrom:'',customTo:'',gra
 let RAW=null,trendChart=null,retChart=null,activeTab='overview';
 const loaded={};
 
-async function q(sql){
-  const clean=sql.replace(/\s+/g,' ').trim();
+// Session query cache — 5-min TTL, survives page refresh within same tab
+const QCACHE={
+  _ttl:5*60*1000,
+  _h(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(h>>>0).toString(36)},
+  get(k){try{const s=sessionStorage.getItem('qc_'+this._h(k));if(!s)return null;const{ts,data}=JSON.parse(s);return Date.now()-ts<this._ttl?data:null}catch{return null}},
+  set(k,v){try{sessionStorage.setItem('qc_'+this._h(k),JSON.stringify({ts:Date.now(),data:v}))}catch{}}
+};
+
+async function _rawQ(clean){
   const res=await fetch(CONFIG.API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:clean})});
   if(!res.ok)throw new Error('API '+res.status+': '+(await res.text()).slice(0,180));
   const j=await res.json();
@@ -740,12 +747,25 @@ async function q(sql){
   throw new Error('Unrecognised API response shape');
 }
 
+async function q(sql){
+  const clean=sql.replace(/\s+/g,' ').trim();
+  const cached=QCACHE.get(clean);
+  if(cached!==null)return cached;
+  const result=await _rawQ(clean);
+  QCACHE.set(clean,result);
+  return result;
+}
+
 async function qBatch(queries){
   const clean=queries.map(({id,query})=>({id,query:query.replace(/\s+/g,' ').trim()}));
+  const cacheKey=clean.map(x=>x.id+'::'+x.query).join('|||');
+  const cached=QCACHE.get(cacheKey);
+  if(cached!==null)return cached;
   const res=await fetch(CONFIG.API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(clean)});
   if(!res.ok)throw new Error('Batch '+res.status+': '+(await res.text()).slice(0,180));
   const j=await res.json();
   if(!Array.isArray(j))throw new Error('Expected array from batch API');
+  QCACHE.set(cacheKey,j);
   return j;
 }
 function batchGet(results,id){
@@ -2402,34 +2422,42 @@ const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetizatio
 
 /* ---------- orchestration ---------- */
 async function loadOverview(){
-  // Show postgres tiles in loading state immediately
   const revEl=document.getElementById('rev-grid');
-  if(revEl)revEl.innerHTML='<div class="loadingcard">Loading…</div>';
+  if(revEl&&!revEl.querySelector('.rev-tile'))revEl.innerHTML='<div class="loadingcard">Loading…</div>';
 
-  // Fire postgres batch in background — does NOT block the overlay
+  // ── Fast path: KPIs only (renders first, ~5-8s cold / instant from cache)
+  const fast=await qBatch([
+    {id:'kpi',query:kpiSQL()},
+    {id:'act',query:activatedSQL()},
+  ]);
+  const kpis=batchGet(fast,'kpi')[0]||{};
+  kpis.activated=+(batchGet(fast,'act')[0]||{}).activated||0;
+  if(!RAW)RAW={kpis,trend:[],breakdown:[]};
+  else RAW.kpis=kpis;
+  renderOverview();
+  // overlay releases here — user sees KPI numbers immediately
+
+  // ── Slow path: charts + geo fire in background (no await)
+  qBatch([
+    {id:'trend',query:trendSQL()},
+    {id:'breakdown',query:breakdownSQL()},
+    {id:'heat',query:`SELECT toDayOfWeek(timestamp) AS dow, toHour(timestamp) AS hr, count(DISTINCT person_id) AS c FROM events WHERE event='${state.heatMetric}' AND ${baseWhere()} GROUP BY dow,hr ORDER BY dow,hr LIMIT 500`},
+    {id:'geo',query:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`},
+  ]).then(slow=>{
+    RAW.trend=batchGet(slow,'trend');
+    RAW.breakdown=batchGet(slow,'breakdown');
+    renderOverview();
+    renderHeatData(batchGet(slow,'heat'));
+    renderGeoData(batchGet(slow,'geo'));
+  }).catch(()=>{});
+
+  // ── Postgres tiles fire in background
   qBatch([
     {id:'rev',query:`SELECT currency, count(DISTINCT user_id) AS payers, sum(amount) AS revenue FROM postgres.payments WHERE status='completed' AND created_at>='2026-05-01' AND ${timeWFor('created_at')} AND ${PG_EXCL} GROUP BY currency ORDER BY revenue DESC`},
     {id:'active',query:`SELECT count(DISTINCT s.user_id) AS n FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND s.plan!='free' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`},
   ]).then(pg=>{
     renderRevenueTilesData(batchGet(pg,'rev'),batchGet(pg,'active')[0]||{});
   }).catch(e=>{if(revEl)revEl.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;});
-
-  // All event queries in one batch — runs in parallel server-side
-  const ev=await qBatch([
-    {id:'kpi',query:kpiSQL()},
-    {id:'act',query:activatedSQL()},
-    {id:'trend',query:trendSQL()},
-    {id:'breakdown',query:breakdownSQL()},
-    {id:'heat',query:`SELECT toDayOfWeek(timestamp) AS dow, toHour(timestamp) AS hr, count(DISTINCT person_id) AS c FROM events WHERE event='${state.heatMetric}' AND ${baseWhere()} GROUP BY dow,hr ORDER BY dow,hr LIMIT 500`},
-    {id:'geo',query:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`},
-  ]);
-  const kpis=batchGet(ev,'kpi')[0]||{};
-  kpis.activated=+(batchGet(ev,'act')[0]||{}).activated||0;
-  RAW={kpis,trend:batchGet(ev,'trend'),breakdown:batchGet(ev,'breakdown')};
-  renderOverview();
-  renderHeatData(batchGet(ev,'heat'));
-  renderGeoData(batchGet(ev,'geo'));
-  // resolves here → busy(false) fires → overlay gone (activated updates ~1-2s later)
 }
 
 async function refreshActive(requery){
