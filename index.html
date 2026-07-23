@@ -3132,7 +3132,7 @@ async function loadProUsers(){
   anyIf(toString(toFloat(p.amount)), p.currency='USD' AND p.status='completed') AS last_usd,
   anyIf(toString(toDate(p.created_at)), p.status='completed') AS paid_on,
   anyIf(p.currency, p.status='completed') AS pay_currency,
-  coalesce(ref.name, ref.email, '') AS referred_by
+  coalesce(any(ref.name), any(ref.email), '') AS referred_by
 FROM postgres.subscriptions s
 INNER JOIN postgres.users u ON u.id = s.user_id
 LEFT JOIN postgres.payments p ON p.user_id = u.id AND p.status = 'completed'
