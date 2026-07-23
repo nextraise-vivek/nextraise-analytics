@@ -2913,7 +2913,16 @@ function bindEmailControls(){
 const PU_STATE={plan:'all',status:'all',search:'',data:[]};
 let PU_BOUND=false;
 
-function planLabel(p){
+function planLabel(p, planKey){
+  // plan_key from postgres.payments is the authoritative interval indicator
+  if(planKey&&planKey!=='None'&&planKey!=='null'){
+    const k=planKey.toLowerCase();
+    if(k.endsWith('-1w')||k.includes('week')||k.includes('7d'))return 'Weekly';
+    if(k.endsWith('-3'))return '3-Month';
+    if(k.endsWith('-5')||k.endsWith('-6'))return '5-Month';
+    if(k.endsWith('-1'))return 'Monthly';
+    if(k.includes('basic'))return 'Basic';
+  }
   if(!p)return '?';
   const s=p.toLowerCase();
   if(s.includes('basic'))return 'Basic';
@@ -2931,7 +2940,7 @@ function planBadgeClass(lbl){
 }
 function puFilteredData(){
   return PU_STATE.data.filter(r=>{
-    const lbl=planLabel(r.plan||'');
+    const lbl=planLabel(r.plan||'',r.planKey||'');
     if(PU_STATE.plan!=='all'&&lbl!==PU_STATE.plan)return false;
     const st=(r.st||'').toLowerCase();
     if(PU_STATE.status==='active'&&st!=='active')return false;
@@ -2990,7 +2999,7 @@ function renderProUsers(){
   tbody.innerHTML=rows.map((r,i)=>{
     const col=avatarColor(r.email||r.name||'');
     const ini=initials(r.name||r.email||'?');
-    const lbl=planLabel(r.plan||'');
+    const lbl=planLabel(r.plan||'',r.planKey||'');
     const bdgCls=planBadgeClass(lbl);
     const st=(r.st||'').toLowerCase();
     const isActive=st==='active'||(st!=='expired'&&r.ends&&r.ends.slice(0,10)>=_today);
@@ -3072,7 +3081,7 @@ async function loadProUsers(){
       if(!r)return;
       const col=avatarColor(r.email||r.name||'');
       const ini=initials(r.name||r.email||'?');
-      const lbl=planLabel(r.plan||'');
+      const lbl=planLabel(r.plan||'',r.planKey||'');
       const bdgCls=planBadgeClass(lbl);
       const _today=new Date().toISOString().slice(0,10);
       const st=(r.st||'').toLowerCase();
@@ -3119,7 +3128,7 @@ async function loadProUsers(){
       const lines=[cols.join(',')];
       const _today=new Date().toISOString().slice(0,10);
       rows.forEach(r=>{
-        const lbl=planLabel(r.plan||'');
+        const lbl=planLabel(r.plan||'',r.planKey||'');
         const st=(r.st||'').toLowerCase();
         const isActive=st==='active'||(st!=='expired'&&r.ends&&r.ends.slice(0,10)>=_today);
         lines.push([
@@ -3145,13 +3154,13 @@ async function loadProUsers(){
     // Phase 1: postgres.users + payments in parallel
     const [usersData, payData] = await Promise.all([
       q(`SELECT lower(email) AS email, name, plan_cache AS plan, sub_status AS st, toString(sub_end_date) AS ends, toString(created_at) AS created_at, toString(referred_by_id) AS ref_id FROM postgres.users WHERE (plan_cache LIKE '%pro%' OR plan_cache LIKE '%Pro%') AND email NOT LIKE '%@nextraise.ai' AND email NOT LIKE '%@creditdharma.in' AND lower(email) NOT LIKE '%test%' ORDER BY created_at DESC LIMIT 1000`),
-      q(`SELECT lower(user_email) AS email, round(sumIf(amount, currency='INR')) AS inr, round(sumIf(amount, currency='USD')) AS usd, count() AS cnt, toString(max(created_at)) AS lastPaid FROM postgres.payments WHERE status='completed' AND user_email NOT LIKE '%@nextraise.ai' AND user_email NOT LIKE '%@creditdharma.in' GROUP BY email LIMIT 2000`),
+      q(`SELECT lower(user_email) AS email, round(sumIf(amount, currency='INR')) AS inr, round(sumIf(amount, currency='USD')) AS usd, count() AS cnt, toString(max(created_at)) AS lastPaid, argMax(plan_key, created_at) AS plan_key FROM postgres.payments WHERE status='completed' AND user_email NOT LIKE '%@nextraise.ai' AND user_email NOT LIKE '%@creditdharma.in' GROUP BY email LIMIT 2000`),
     ]);
     const payMap={};
-    for(const p of (payData||[])) payMap[p.email]={inr:+p.inr||0,usd:+p.usd||0,cnt:+p.cnt||0,lastPaid:p.lastPaid||''};
+    for(const p of (payData||[])) payMap[p.email]={inr:+p.inr||0,usd:+p.usd||0,cnt:+p.cnt||0,lastPaid:p.lastPaid||'',planKey:p.plan_key||''};
     PU_STATE.data=(usersData||[]).map(u=>{
       const pm=payMap[u.email]||{};
-      return {...u,inr:pm.inr||0,usd:pm.usd||0,payCount:pm.cnt||0,lastPaid:pm.lastPaid||'',phone:'',refName:''};
+      return {...u,inr:pm.inr||0,usd:pm.usd||0,payCount:pm.cnt||0,lastPaid:pm.lastPaid||'',planKey:pm.planKey||'',phone:'',refName:''};
     });
     renderProUsers();
 
