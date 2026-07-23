@@ -1100,7 +1100,7 @@ function renderOverview(){
   document.getElementById('funnel').innerHTML=fst.map((s,i)=>{const val=+t[s[0]]||0,w=Math.max(3,100*val/max),prev=i>0?+t[fst[i-1][0]]||0:null;
     const conv=prev!=null?PCT(val,prev):'';const drop=prev!=null&&prev>0?`▼ ${(100-100*val/prev).toFixed(1)}% (${NUM(prev-val)} lost)`:'';
     const show=state.units==='pct'&&prev!=null?conv:NUM(val);
-    return `<div class="fstep"><div class="lab"><span class="nm" data-tip="${ftips[s[0]]}">${s[1]} <span class="tip">i</span></span><span class="dp">${prev!=null?conv+' conv':''}</span></div><div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:var(${s[2]})">${show}</div></div>${drop?`<div class="drop">${drop}</div>`:''}</div>`;}).join('');
+    return `<div class="fstep"><div class="lab"><span class="nm">${s[1]} <span class="tip" data-tip="${ftips[s[0]]}">i</span></span><span class="dp">${prev!=null?conv+' conv':''}</span></div><div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:var(${s[2]})">${show}</div></div>${drop?`<div class="drop">${drop}</div>`:''}</div>`;}).join('');
   document.getElementById('funnel-sub').textContent=NUM(t.visitors)+' visitors → '+NUM(t.paid)+' paid';
   document.getElementById('funnel-note').textContent=(+t.paid||0)<10?'Paid count is sparse — try 30d/90d for the conversion funnel.':'';
   drawTrend(RAW.trend);
@@ -3277,7 +3277,7 @@ function bindFilters(){
 (function(){const tt=document.getElementById('tooltip');
   document.addEventListener('mouseover',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el){tt.textContent=el.getAttribute('data-tip');tt.style.display='block';}});
   document.addEventListener('mousemove',e=>{if(tt.style.display==='block'){let x=e.clientX+14,y=e.clientY+16;if(x+350>window.innerWidth)x=Math.max(8,e.clientX-350);if(y+80>window.innerHeight)y=e.clientY-70;tt.style.left=x+'px';tt.style.top=y+'px';}});
-  document.addEventListener('mouseout',e=>{if(e.target.closest&&e.target.closest('[data-tip]'))tt.style.display='none';});
+  document.addEventListener('mouseout',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el&&!el.contains(e.relatedTarget))tt.style.display='none';});
 })();
 
 bindNav();bindFilters();bindMobile();refreshActive(true);
