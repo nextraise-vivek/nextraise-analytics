@@ -1570,38 +1570,62 @@ function renderInfluencers(){
         const statusDot={active:`<span style="color:var(--paid);font-weight:600;font-size:11px">● Active</span>`,expired:`<span style="color:var(--warn);font-weight:600;font-size:11px">● Expired</span>`,nosub:`<span style="color:var(--muted);font-size:11px">● No sub</span>`};
         const rev=+r.revenue_inr||0;
         const conv=+r.pro_conversions||0;
-        const paySaved=infPaySettings()[rid]||{type:'commission',rate:10};
+        // Migrate old single-type format → new multi-type format
+        const _rawPay=infPaySettings()[rid]||{};
+        let payTypes;
+        if(_rawPay.types){
+          payTypes=_rawPay.types;
+        } else if(_rawPay.type){
+          payTypes={commission:{enabled:_rawPay.type==='commission',rate:_rawPay.type==='commission'?(_rawPay.rate||10):10},performance:{enabled:_rawPay.type==='performance',rate:_rawPay.type==='performance'?(_rawPay.rate||100):100},fixed:{enabled:_rawPay.type==='fixed',rate:_rawPay.type==='fixed'?(_rawPay.rate||0):0}};
+        } else {
+          payTypes={commission:{enabled:false,rate:10},performance:{enabled:false,rate:100},fixed:{enabled:false,rate:0}};
+        }
+        const savedCode=_rawPay.code||'';
         const socialSaved=infSocial()[rid]||{views:'',likes:'',shares:'',saves:'',comments:''};
-        const pt=paySaved.type;const pr=paySaved.rate;
-        const payout=calcInfPay(pt,pr,rev,conv);
-        const typeLabel={commission:`${pr}% of ₹${NUM(rev)} revenue (incl. renewals)`,performance:`₹${NUM(pr)} × ${NUM(conv)} conversions`,fixed:`One-time settlement`};
+        const calcMultiPay=(types)=>{
+          let t=0;
+          if(types.commission?.enabled)t+=Math.round((rev)*(+types.commission.rate||0)/100);
+          if(types.performance?.enabled)t+=Math.round((conv)*(+types.performance.rate||0));
+          if(types.fixed?.enabled)t+=(+types.fixed.rate||0);
+          return t;
+        };
+        const totalPayout=calcMultiPay(payTypes);
+        const typeRow=(key,label,hint,inp,en)=>`
+          <div style="border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:8px;background:${en?'#f0f9ff':'var(--panel)'};" id="ptr-${key}-${rid}">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;margin:0">
+              <input type="checkbox" id="pck-${key}-${rid}" ${en?'checked':''} style="width:15px;height:15px;accent-color:var(--brand);cursor:pointer">
+              <span style="font-size:12px;font-weight:700;color:var(--fg)">${label}</span>
+            </label>
+            <div id="pinp-${key}-${rid}" style="display:${en?'flex':'none'};align-items:center;gap:7px;margin-top:8px;margin-left:23px;flex-wrap:wrap">
+              ${inp}
+              <span style="font-size:11px;color:var(--muted)">${hint}</span>
+            </div>
+          </div>`;
         expand.innerHTML=
           `<div class="pay-calc" id="pc-${rid}">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap">Payment Type</span>
-              <select id="pt-${rid}" style="padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);cursor:pointer">
-                <option value="commission"${pt==='commission'?' selected':''}>% Commission (% of revenue)</option>
-                <option value="performance"${pt==='performance'?' selected':''}>Performance Bonus (per conversion)</option>
-                <option value="fixed"${pt==='fixed'?' selected':''}>Fixed Settlement (one-time amount)</option>
-              </select>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Payment Type</span>
+              <span style="font-size:10px;color:var(--muted)">(select one or more)</span>
             </div>
-            <div id="pay-sub-${rid}" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
-              <div style="display:flex;align-items:center;gap:6px" id="pay-inp-wrap-${rid}">
-                ${pt==='commission'
-                  ?`<input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" max="100" step="0.5" value="${pr}" placeholder="10"><span style="font-size:11px;color:var(--muted)">% of ₹${NUM(rev)} revenue (incl. renewals)</span>`
-                  :pt==='performance'
-                  ?`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="1" value="${pr}" placeholder="100"><span style="font-size:11px;color:var(--muted)">per Pro conversion · ${NUM(conv)} total conversions</span>`
-                  :`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="100" value="${pr}" placeholder="5000"><span style="font-size:11px;color:var(--muted)">one-time fixed settlement</span>`}
-              </div>
+            ${typeRow('commission','% Commission',`% of ₹${NUM(rev)} revenue (incl. renewals)`,
+              `<input class="pay-rate-inp" id="pr-commission-${rid}" type="number" min="0" max="100" step="0.5" value="${payTypes.commission.rate||10}" placeholder="10">`,
+              payTypes.commission.enabled)}
+            ${typeRow('performance','Performance Bonus',`₹ per Pro conversion · ${NUM(conv)} total conversions`,
+              `<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-performance-${rid}" type="number" min="0" step="1" value="${payTypes.performance.rate||100}" placeholder="100">`,
+              payTypes.performance.enabled)}
+            ${typeRow('fixed','Fixed Settlement',`one-time fixed amount`,
+              `<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-fixed-${rid}" type="number" min="0" step="100" value="${payTypes.fixed.rate||0}" placeholder="5000">`,
+              payTypes.fixed.enabled)}
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px">
               <div class="pay-out-box">
-                <span style="font-size:11px;color:var(--muted)">Payout:</span>
-                <span class="pay-out-amt" id="po-${rid}">₹${NUM(payout)}</span>
+                <span style="font-size:11px;color:var(--muted)">Total Payout:</span>
+                <span class="pay-out-amt" id="po-${rid}">₹${NUM(totalPayout)}</span>
               </div>
-              <button class="social-save-btn" id="pay-save-${rid}" style="margin-left:4px">Save</button>
+              <button class="social-save-btn" id="pay-save-${rid}">Save</button>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
               <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap">Discount Code</span>
-              <input id="dc-${rid}" type="text" placeholder="e.g. INFL_PRIYA20" value="${(infPaySettings()[rid]||{}).code||''}" style="padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);width:160px">
+              <input id="dc-${rid}" type="text" placeholder="e.g. INFL_PRIYA20" value="${savedCode}" style="padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);width:160px">
               <span style="font-size:11px;color:var(--muted)">Users paying with this code get attributed to this influencer</span>
             </div>
           </div>
@@ -1664,48 +1688,42 @@ function renderInfluencers(){
               </tr>`;
             }).join('')}</tbody>
           </table>`;
-        // Wire up payment calculator interactions
+        // Wire up multi-type payment calculator
         (()=>{
-          let curPt=pt, curRate=pr;
-          const rebuildInputs=(newPt)=>{
-            const wrap=document.getElementById(`pay-inp-wrap-${rid}`);
-            if(!wrap)return;
-            if(newPt==='commission'){
-              wrap.innerHTML=`<input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" max="100" step="0.5" value="${curRate||10}" placeholder="10"><span style="font-size:11px;color:var(--muted)">% of ₹${NUM(rev)} revenue (incl. renewals)</span>`;
-            } else if(newPt==='performance'){
-              wrap.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="1" value="${curRate||100}" placeholder="100"><span style="font-size:11px;color:var(--muted)">per Pro conversion · ${NUM(conv)} total conversions</span>`;
-            } else {
-              wrap.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="100" value="${curRate||0}" placeholder="5000"><span style="font-size:11px;color:var(--muted)">one-time fixed settlement</span>`;
-            }
-            document.getElementById(`pr-${rid}`)?.addEventListener('input',e=>{
-              curRate=+e.target.value||0;
-              const po=document.getElementById(`po-${rid}`);
-              if(po)po.textContent='₹'+NUM(calcInfPay(curPt,curRate,rev,conv));
-              saveInfPay(rid,{type:curPt,rate:curRate});
+          const TYPES=['commission','performance','fixed'];
+          const getCurTypes=()=>{
+            const t={};
+            TYPES.forEach(k=>{
+              const ck=document.getElementById(`pck-${k}-${rid}`);
+              const inp=document.getElementById(`pr-${k}-${rid}`);
+              t[k]={enabled:ck?ck.checked:false,rate:inp?+inp.value||0:0};
             });
+            return t;
           };
-          const sel=document.getElementById(`pt-${rid}`);
-          if(sel){
-            sel.onchange=()=>{
-              curPt=sel.value;
-              curRate=infPaySettings()[rid]?.rate||0;
-              rebuildInputs(curPt);
-              const po=document.getElementById(`po-${rid}`);
-              if(po)po.textContent='₹'+NUM(calcInfPay(curPt,curRate,rev,conv));
-              saveInfPay(rid,{type:curPt,rate:curRate});
-            };
-          }
-          // Bind initial input
-          document.getElementById(`pr-${rid}`)?.addEventListener('input',e=>{
-            curRate=+e.target.value||0;
+          const refreshPayout=()=>{
             const po=document.getElementById(`po-${rid}`);
-            if(po)po.textContent='₹'+NUM(calcInfPay(curPt,curRate,rev,conv));
+            if(po)po.textContent='₹'+NUM(calcMultiPay(getCurTypes()));
+          };
+          TYPES.forEach(k=>{
+            const ck=document.getElementById(`pck-${k}-${rid}`);
+            const inp=document.getElementById(`pr-${k}-${rid}`);
+            const row=document.getElementById(`ptr-${k}-${rid}`);
+            const inpWrap=document.getElementById(`pinp-${k}-${rid}`);
+            if(ck){
+              ck.onchange=()=>{
+                const on=ck.checked;
+                if(inpWrap)inpWrap.style.display=on?'flex':'none';
+                if(row)row.style.background=on?'#f0f9ff':'var(--panel)';
+                refreshPayout();
+              };
+            }
+            if(inp)inp.addEventListener('input',refreshPayout);
           });
           // Save button
           document.getElementById(`pay-save-${rid}`)?.addEventListener('click',()=>{
-            curRate=+document.getElementById(`pr-${rid}`)?.value||0;
+            const types=getCurTypes();
             const code=(document.getElementById(`dc-${rid}`)?.value||'').trim();
-            saveInfPay(rid,{type:curPt,rate:curRate,code});
+            saveInfPay(rid,{types,code});
             const btn=document.getElementById(`pay-save-${rid}`);
             if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='Save';btn.style.background='';},1500);}
           });
@@ -1829,12 +1847,18 @@ function renderPaymentsTab(){
   }
 
   list.innerHTML=payRows.map((row,i)=>{
-    const {rid,inf,payments,totalPaid,lastDate,payCount,type,rate,code}=row;
+    const {rid,inf,payments,totalPaid,lastDate,payCount,code}=row;
+    const set=settings[rid]||{};
     const col=avatarColor(inf.email||inf.name||rid||'');
     const plat=(inf.platform||'').toLowerCase();
     const igBadge=plat==='instagram'?`<span class="inf-ig-badge">📸 Instagram</span>`:plat==='twitter'?`<span class="inf-ig-badge" style="background:#e7f3ff;color:#1d9bf0">🐦 Twitter</span>`:'';
-    const typeLabel=type==='commission'?`${rate}% commission`:type==='performance'?`₹${rate}/conv`:`Fixed ₹${rate}`;
-    const typeBadge=type?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">${typeLabel}</span>`:'';
+    const multiTypes=set.types||{};
+    const typeParts=[];
+    if(multiTypes.commission?.enabled)typeParts.push(`${multiTypes.commission.rate||0}% comm`);
+    if(multiTypes.performance?.enabled)typeParts.push(`₹${multiTypes.performance.rate||0}/conv`);
+    if(multiTypes.fixed?.enabled)typeParts.push(`Fixed ₹${multiTypes.fixed.rate||0}`);
+    if(!typeParts.length&&set.type)typeParts.push(set.type==='commission'?`${set.rate||0}% comm`:set.type==='performance'?`₹${set.rate||0}/conv`:`Fixed ₹${set.rate||0}`);
+    const typeBadge=typeParts.length?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">${typeParts.join(' + ')}</span>`:'';
     const codeBadge=code?`<span class="inf-codebd" style="background:${col}22;color:${col}">${h(code)}</span>`:'';
     const histRows=payments.map(p=>`<tr>
       <td style="padding:5px 10px;font-size:12px;color:var(--muted)">${p.date||'—'}</td>
