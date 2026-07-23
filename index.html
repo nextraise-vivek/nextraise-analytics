@@ -1046,12 +1046,14 @@ function renderRevenueTilesData(rev,active){
   const activePro=+((active||{}).n||0);
   const totalInrEq=(+inr.revenue||0)+(+usd.revenue||0)*USD_INR;
   const totalPayers=(+inr.payers||0)+(+usd.payers||0);
+  const avgRev=totalPayers>0?`₹${NUM(Math.round(totalInrEq/totalPayers))}`:'—';
   document.getElementById('rev-sub').textContent=`${rangeLabel()} · postgres`;
-  el.style.gridTemplateColumns='repeat(4,1fr)';
+  el.style.gridTemplateColumns='repeat(5,1fr)';
   el.innerHTML=[
     ['₹ Revenue',`₹${NUM(inr.revenue)}`,`${NUM(inr.payers)} payers (INR)`,'--mrr'],
     ['$ Revenue',`$${(+usd.revenue||0).toFixed(2)}`,`${NUM(usd.payers)} payers (USD)`,'--paid'],
-    ['Total (INR eq.)',`₹${NUM(totalInrEq)}`,`${NUM(totalPayers)} payers · $1=₹${USD_INR}`,'--brand'],
+    ['Total (INR eq.)',`₹${NUM(Math.round(totalInrEq))}`,`${NUM(totalPayers)} payers · $1=₹${USD_INR}`,'--brand'],
+    ['Avg Revenue',avgRev,`per payer (INR eq.)`,'--mrr'],
     ['Active Pro',NUM(activePro),'paid subscriptions now','--brand'],
   ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:18px">${v}</div><div class="c">${c}</div></div>`).join('');
 }
