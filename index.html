@@ -1355,6 +1355,7 @@ function initials(name){
 async function loadInfluencers(){
   document.getElementById('inf-kpis').innerHTML='<div class="loadingcard">Loading…</div>';
   document.getElementById('inf-list').innerHTML='<div class="loadingcard" style="padding:10px 0">Loading influencers…</div>';
+  await loadInfDB(); // ensure influencer data is loaded from Redis before rendering
   try{
     const res=await qBatch([
       {id:'pg',query:`SELECT r.id AS referrer_id, r.name AS name, r.email AS email, coalesce(r.referral_code,'') AS code, count(u.id) AS referrals, countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS pro_conversions, round(coalesce(sumIf(toFloat64(pay.amount), pay.currency='INR') + sumIf(toFloat64(pay.amount)*${USD_INR}, pay.currency='USD'),0)) AS revenue_inr, toString(max(toDate(u.created_at))) AS last_referral FROM postgres.users r INNER JOIN postgres.users u ON u.referred_by_id=r.id LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.created_at>='2026-05-01' WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' GROUP BY r.id, r.name, r.email, r.referral_code HAVING referrals>0 ORDER BY referrals DESC LIMIT 200`},
@@ -1947,18 +1948,65 @@ const emState={view:'num',platform:'all',search:'',sort:'date_desc'};
 let EM_DATA=[];
 
 function emNotes(){try{return JSON.parse(localStorage.getItem('em_notes_v1')||'{}')}catch{return {}}}
-function infPaySettings(){try{return JSON.parse(localStorage.getItem('inf_pay_v1')||'{}')}catch{return {}}}
-function saveInfPay(rid,obj){const d=infPaySettings();d[rid]=obj;localStorage.setItem('inf_pay_v1',JSON.stringify(d));}
-function infSocial(){try{return JSON.parse(localStorage.getItem('inf_social_v1')||'{}')}catch{return {}}}
-function saveInfSocial(rid,obj){const d=infSocial();d[rid]=obj;localStorage.setItem('inf_social_v1',JSON.stringify(d));}
-function infBankDetails(){try{return JSON.parse(localStorage.getItem('inf_bank_v1')||'{}')}catch{return {}}}
-function saveInfBank(rid,obj){const d=infBankDetails();d[rid]=obj;localStorage.setItem('inf_bank_v1',JSON.stringify(d));}
-function infPayHistory(){try{return JSON.parse(localStorage.getItem('inf_pay_hist_v1')||'{}')}catch{return {}}}
+// In-memory DB — populated from Redis on load, localStorage is fallback
+const INF_DB={pay:{},hist:{},bank:{},social:{},_loaded:false};
+
+async function loadInfDB(){
+  if(INF_DB._loaded)return;
+  try{
+    const r=await fetch('/api/inf-data?type=all');
+    if(r.ok){
+      const d=await r.json();
+      if(d.pay)Object.assign(INF_DB.pay,d.pay);
+      if(d.hist)Object.assign(INF_DB.hist,d.hist);
+      if(d.bank)Object.assign(INF_DB.bank,d.bank);
+      if(d.social)Object.assign(INF_DB.social,d.social);
+      // Sync to localStorage as fallback
+      try{
+        localStorage.setItem('inf_pay_v1',JSON.stringify(INF_DB.pay));
+        localStorage.setItem('inf_pay_hist_v1',JSON.stringify(INF_DB.hist));
+        localStorage.setItem('inf_bank_v1',JSON.stringify(INF_DB.bank));
+        localStorage.setItem('inf_social_v1',JSON.stringify(INF_DB.social));
+      }catch(e){}
+    }
+  }catch(e){}
+  // Merge localStorage (covers Redis-unavailable case)
+  try{const v=JSON.parse(localStorage.getItem('inf_pay_v1')||'{}');for(const k in v)if(!INF_DB.pay[k])INF_DB.pay[k]=v[k];}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem('inf_pay_hist_v1')||'{}');for(const k in v)if(!INF_DB.hist[k])INF_DB.hist[k]=v[k];}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem('inf_bank_v1')||'{}');for(const k in v)if(!INF_DB.bank[k])INF_DB.bank[k]=v[k];}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem('inf_social_v1')||'{}');for(const k in v)if(!INF_DB.social[k])INF_DB.social[k]=v[k];}catch(e){}
+  INF_DB._loaded=true;
+}
+
+function _apiSave(type,rid,data){
+  // Fire-and-forget — don't await, keep UI snappy
+  fetch('/api/inf-data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,rid,data})}).catch(()=>{});
+}
+
+function infPaySettings(){return INF_DB.pay;}
+function saveInfPay(rid,obj){
+  INF_DB.pay[rid]=obj;
+  const d=INF_DB.pay;localStorage.setItem('inf_pay_v1',JSON.stringify(d));
+  _apiSave('pay',rid,obj);
+}
+function infSocial(){return INF_DB.social;}
+function saveInfSocial(rid,obj){
+  INF_DB.social[rid]=obj;
+  const d=INF_DB.social;localStorage.setItem('inf_social_v1',JSON.stringify(d));
+  _apiSave('social',rid,obj);
+}
+function infBankDetails(){return INF_DB.bank;}
+function saveInfBank(rid,obj){
+  INF_DB.bank[rid]=obj;
+  const d=INF_DB.bank;localStorage.setItem('inf_bank_v1',JSON.stringify(d));
+  _apiSave('bank',rid,obj);
+}
+function infPayHistory(){return INF_DB.hist;}
 function addInfPayment(rid,amount,note){
-  const d=infPayHistory();
-  if(!d[rid])d[rid]=[];
-  d[rid].unshift({amount,note:note||'',date:new Date().toISOString().slice(0,10)});
-  localStorage.setItem('inf_pay_hist_v1',JSON.stringify(d));
+  if(!INF_DB.hist[rid])INF_DB.hist[rid]=[];
+  INF_DB.hist[rid].unshift({amount,note:note||'',date:new Date().toISOString().slice(0,10)});
+  localStorage.setItem('inf_pay_hist_v1',JSON.stringify(INF_DB.hist));
+  _apiSave('hist',rid,INF_DB.hist[rid]);
 }
 function calcInfPay(type,rate,rev,conv){
   if(type==='commission')return Math.round((+rev||0)*(+rate||0)/100);
@@ -2183,14 +2231,14 @@ function renderPaymentsTab(){
       document.getElementById(`phrn-${pi}-${ei}`).innerHTML=`<input type="text" id="phen-${pi}-${ei}" value="${(p.note||'').replace(/"/g,'&quot;')}" style="padding:3px 6px;border:1px solid var(--line);border-radius:5px;font-size:11px;width:160px">`;
       btn.parentElement.innerHTML=`<button id="phes-${pi}-${ei}" style="font-size:10px;padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:5px;cursor:pointer;margin-right:4px">Save</button><button id="phec-${pi}-${ei}" style="font-size:10px;padding:2px 8px;border:1px solid var(--line);border-radius:5px;cursor:pointer;background:var(--panel)">Cancel</button>`;
       document.getElementById(`phes-${pi}-${ei}`)?.addEventListener('click',()=>{
-        const d=infPayHistory();
-        if(!d[rid]||d[rid][ei]==null)return;
-        d[rid][ei]={
+        if(!INF_DB.hist[rid]||INF_DB.hist[rid][ei]==null)return;
+        INF_DB.hist[rid][ei]={
           date:document.getElementById(`phed-${pi}-${ei}`)?.value||p.date,
           amount:+(document.getElementById(`phea-${pi}-${ei}`)?.value)||0,
           note:(document.getElementById(`phen-${pi}-${ei}`)?.value||'').trim()
         };
-        localStorage.setItem('inf_pay_hist_v1',JSON.stringify(d));
+        localStorage.setItem('inf_pay_hist_v1',JSON.stringify(INF_DB.hist));
+        _apiSave('hist',rid,INF_DB.hist[rid]);
         renderPaymentsTab();
       });
       document.getElementById(`phec-${pi}-${ei}`)?.addEventListener('click',()=>renderPaymentsTab());
