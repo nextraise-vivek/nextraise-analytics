@@ -1,13 +1,7 @@
-// Node.js runtime — uses MongoDB for server-side query caching
+// Node.js runtime — MongoDB requires TCP
 import { getDb, COLL } from './_mongodb.js';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
-
-const CACHE_TTL_SEC = 300; // 5 minutes
+const CACHE_TTL_SEC = 300;
 
 function hashQuery(s) {
   let h = 2166136261;
@@ -49,22 +43,43 @@ async function cachedQuery(db, apiKey, query) {
   const cached = await getCache(db, key);
   if (cached) return { ...cached, _cached: true };
   const result = await runQuery(apiKey, clean);
-  if (!result.error) setCache(db, key, result); // fire-and-forget
+  if (!result.error) setCache(db, key, result);
   return result;
 }
 
-export default async function handler(req) {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: CORS });
-  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: CORS });
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => {
+      try { resolve(JSON.parse(data)); }
+      catch (e) { reject(new Error('Invalid JSON')); }
+    });
+    req.on('error', reject);
+  });
+}
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+export default async function handler(req, res) {
+  Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
   const apiKey = process.env.POSTHOG_API_KEY;
-  if (!apiKey) return new Response(JSON.stringify({ error: 'POSTHOG_API_KEY not configured' }), { status: 500, headers: CORS });
+  if (!apiKey) { res.status(500).json({ error: 'POSTHOG_API_KEY not configured' }); return; }
 
-  // Get DB (non-blocking — if unavailable, queries still run uncached)
   let db = null;
   try { db = await getDb(); } catch {}
 
-  const body = await req.json();
+  let body;
+  try { body = await readBody(req); }
+  catch { res.status(400).json({ error: 'Invalid JSON' }); return; }
 
   // Batch mode: [{id, query}, ...]
   if (Array.isArray(body)) {
@@ -76,18 +91,19 @@ export default async function handler(req) {
         } catch (e) { return { id, error: e.message }; }
       })
     );
-    return new Response(JSON.stringify(results), { headers: { 'Content-Type': 'application/json', ...CORS } });
+    res.status(200).json(results);
+    return;
   }
 
   // Single mode: {query}
   const { query } = body || {};
-  if (!query) return new Response(JSON.stringify({ error: 'Missing query' }), { status: 400, headers: CORS });
+  if (!query) { res.status(400).json({ error: 'Missing query' }); return; }
 
   try {
     const r = db ? await cachedQuery(db, apiKey, query) : await runQuery(apiKey, query);
-    if (r.error && !r.results) return new Response(JSON.stringify({ error: r.error }), { status: 400, headers: { 'Content-Type': 'application/json', ...CORS } });
-    return new Response(JSON.stringify(r), { headers: { 'Content-Type': 'application/json', ...CORS } });
+    if (r.error && !r.results) { res.status(400).json({ error: r.error }); return; }
+    res.status(200).json(r);
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } });
+    res.status(500).json({ error: e.message });
   }
 }

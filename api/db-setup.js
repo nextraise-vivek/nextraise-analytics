@@ -1,21 +1,15 @@
-// One-time setup: creates TTL index on query_cache.expiresAt
-// Call GET /api/db-setup once after deploy
+// One-time setup: creates indexes. GET /api/db-setup
 import { getDb, COLL } from './_mongodb.js';
 
-const CORS = { 'Access-Control-Allow-Origin': '*' };
-
-export default async function handler(req) {
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   try {
     const db = await getDb();
     await db.collection(COLL.CACHE).createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
     await db.collection(COLL.INF).createIndex({ updatedAt: 1 });
     await db.collection(COLL.HIST).createIndex({ updatedAt: 1 });
-    return new Response(JSON.stringify({ ok: true, msg: 'Indexes created' }), {
-      headers: { 'Content-Type': 'application/json', ...CORS },
-    });
+    res.status(200).json({ ok: true, msg: 'Indexes created' });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
-    });
+    res.status(500).json({ error: e.message });
   }
 }
