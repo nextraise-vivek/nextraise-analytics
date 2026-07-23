@@ -2018,23 +2018,31 @@ function renderPaymentsTab(){
     if(multiTypes.performance?.enabled)typeParts.push(`₹${multiTypes.performance.rate||0}/conv`);
     if(multiTypes.fixed?.enabled)typeParts.push(`Fixed ₹${multiTypes.fixed.rate||0}`);
     if(!typeParts.length&&set.type)typeParts.push(set.type==='commission'?`${set.rate||0}% comm`:set.type==='performance'?`₹${set.rate||0}/conv`:`Fixed ₹${set.rate||0}`);
-    return {rid,inf,payments,totalPaid,owed,balance,payCount,lastDate,code,typeParts};
-  }).sort((a,b)=>b.balance-a.balance);
+    // Weekly cadence: next due = last payment date + 7 days
+    const todayMs=Date.now();
+    const lastMs=lastDate?new Date(lastDate).getTime():0;
+    const nextDueMs=lastMs?lastMs+7*86400000:0;
+    // daysUntilDue: negative = overdue, positive = upcoming
+    const daysUntilDue=nextDueMs?Math.round((nextDueMs-todayMs)/86400000):(owed>0?-999:0);
+    const weekStatus=daysUntilDue<=-14?'overdue_2plus':daysUntilDue<0?'overdue':daysUntilDue===0?'due_today':daysUntilDue<=7?'due_week':'upcoming';
+    return {rid,inf,payments,totalPaid,owed,balance,payCount,lastDate,code,typeParts,daysUntilDue,weekStatus};
+  }).sort((a,b)=>a.daysUntilDue-b.daysUntilDue); // most overdue first
 
   const grandOwed=payRows.reduce((s,r)=>s+r.owed,0);
   const grandPaid=payRows.reduce((s,r)=>s+r.totalPaid,0);
   const grandBalance=grandOwed-grandPaid;
-  const unpaidCt=payRows.filter(r=>r.totalPaid===0&&r.owed>0).length;
+  const overdueCt=payRows.filter(r=>r.daysUntilDue<0&&r.owed>0).length;
+  const dueThisWeekCt=payRows.filter(r=>r.daysUntilDue>=0&&r.daysUntilDue<=7&&r.owed>0).length;
 
   const kpis=document.getElementById('inf-kpis');
   if(kpis)kpis.innerHTML=[
-    ['To Pay',NUM(payRows.filter(r=>r.balance>0).length),'influencers with balance due','--warn'],
-    ['Total Owed',`₹${NUM(grandOwed)}`,'calculated from settings','--sig'],
+    ['Overdue',NUM(overdueCt),'past weekly cycle','--warn'],
+    ['Due This Week',NUM(dueThisWeekCt),'within 7 days','--sig'],
     ['Total Paid Out',`₹${NUM(grandPaid)}`,'sum of recorded payments','--paid'],
     ['Balance Due',`₹${NUM(Math.max(0,grandBalance))}`,'owed − paid','--brand'],
   ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:${String(v).length>8?'16px':'20px'}">${v}</div><div class="c">${c}</div></div>`).join('');
 
-  document.getElementById('inf-sub').innerHTML=`${payRows.length} influencer${payRows.length!==1?'s':''} with payment settings · ${unpaidCt} yet to be paid`;
+  document.getElementById('inf-sub').innerHTML=`${payRows.length} influencer${payRows.length!==1?'s':''} · weekly payout schedule · sorted by urgency`;
 
   const list=document.getElementById('inf-list');
   if(!payRows.length){
@@ -2042,33 +2050,47 @@ function renderPaymentsTab(){
     return;
   }
 
+  const WEEK_GROUPS=[
+    {key:'overdue_2plus',label:'⚠ Overdue (2+ weeks)',bg:'#fef2f2',color:'#dc2626'},
+    {key:'overdue',label:'⚠ Overdue',bg:'#fff7ed',color:'#d97706'},
+    {key:'due_today',label:'📅 Due Today',bg:'#fffbeb',color:'#d97706'},
+    {key:'due_week',label:'📅 Due This Week',bg:'#eff6ff',color:'#1d4ed8'},
+    {key:'upcoming',label:'✓ Upcoming / Recently Paid',bg:'#f0fdf4',color:'#16a34a'},
+  ];
+  let lastGroup='';
   list.innerHTML=payRows.map((row,i)=>{
-    const {rid,inf,payments,totalPaid,owed,balance,payCount,lastDate,code,typeParts}=row;
+    const {rid,inf,payments,totalPaid,owed,balance,payCount,lastDate,code,typeParts,daysUntilDue,weekStatus}=row;
     const col=avatarColor(inf.email||inf.name||rid||'');
     const plat=(inf.platform||'').toLowerCase();
     const igBadge=plat==='instagram'?`<span class="inf-ig-badge">📸 Instagram</span>`:plat==='twitter'?`<span class="inf-ig-badge" style="background:#e7f3ff;color:#1d9bf0">🐦 Twitter</span>`:'';
     const typeBadge=typeParts.length?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">${typeParts.join(' + ')}</span>`:'';
     const codeBadge=code?`<span class="inf-codebd" style="background:${col}22;color:${col}">${h(code)}</span>`:'';
-    const isPaid=totalPaid>0&&balance<=0;
-    const isUnpaid=totalPaid===0&&owed>0;
-    const statusBadge=isPaid
-      ?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">✓ Paid</span>`
-      :isUnpaid
-      ?`<span style="background:#fff7ed;color:#d97706;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">⚠ Unpaid</span>`
-      :balance>0
-      ?`<span style="background:#fef2f2;color:#dc2626;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">⬤ Balance ₹${NUM(balance)}</span>`
+    const abs=Math.abs(daysUntilDue);
+    const weekBadge=weekStatus==='overdue_2plus'
+      ?`<span style="background:#fef2f2;color:#dc2626;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">⚠ ${abs}d overdue</span>`
+      :weekStatus==='overdue'
+      ?`<span style="background:#fff7ed;color:#d97706;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">⚠ ${abs}d overdue</span>`
+      :weekStatus==='due_today'
+      ?`<span style="background:#fffbeb;color:#d97706;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">📅 Due today</span>`
+      :weekStatus==='due_week'
+      ?`<span style="background:#eff6ff;color:#1d4ed8;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">📅 Due in ${abs}d</span>`
+      :`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700">✓ ${lastDate?`Paid ${lastDate}`:'Paid'}</span>`;
+    const grp=WEEK_GROUPS.find(g=>g.key===weekStatus)||WEEK_GROUPS[4];
+    const groupHeader=weekStatus!==lastGroup
+      ?(lastGroup=weekStatus,`<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:${grp.color};background:${grp.bg};border-radius:6px;padding:5px 12px;margin:${i>0?'14px':0} 0 6px">${grp.label}</div>`)
       :'';
-    const histRows=payments.map(p=>`<tr>
-      <td style="padding:5px 10px;font-size:12px;color:var(--muted)">${p.date||'—'}</td>
-      <td style="padding:5px 10px;font-size:13px;font-weight:700;color:#16a34a">₹${NUM(+p.amount||0)}</td>
-      <td style="padding:5px 10px;font-size:12px;color:var(--fg)">${h(p.note||'—')}</td>
+    const histRows=payments.map((p,pi)=>`<tr id="phr-${i}-${pi}">
+      <td style="padding:5px 10px;font-size:12px;color:var(--muted)" id="phrd-${i}-${pi}">${p.date||'—'}</td>
+      <td style="padding:5px 10px;font-size:13px;font-weight:700;color:#16a34a" id="phra-${i}-${pi}">₹${NUM(+p.amount||0)}</td>
+      <td style="padding:5px 10px;font-size:12px;color:var(--fg)" id="phrn-${i}-${pi}">${h(p.note||'—')}</td>
+      <td style="padding:5px 10px;text-align:right"><button class="ph-edit-btn" data-pi="${i}" data-ei="${pi}" data-rid="${rid}" style="font-size:10px;padding:2px 8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--muted);cursor:pointer">✎ Edit</button></td>
     </tr>`).join('');
-    return `<div class="inf-row" style="margin-bottom:8px">
+    return `${groupHeader}<div class="inf-row" style="margin-bottom:8px">
       <div class="inf-row-main pay-tab-row" data-pid="${i}" style="cursor:pointer">
         <span class="inf-rank">${i+1}</span>
         <div class="inf-avatar" style="background:${col}">${initials(inf.name||'')}</div>
         <div class="inf-nameblk">
-          <div class="inf-nameline">${h(inf.name||inf.email||rid)}${igBadge}${typeBadge}${codeBadge}${statusBadge}</div>
+          <div class="inf-nameline">${h(inf.name||inf.email||rid)}${igBadge}${typeBadge}${codeBadge}${weekBadge}</div>
           <div class="inf-emailline">${h(inf.email||rid)}</div>
         </div>
         <div class="inf-stats">
@@ -2092,11 +2114,13 @@ function renderPaymentsTab(){
             <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Date</th>
             <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Amount</th>
             <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Note</th>
+            <th style="border-bottom:1px solid var(--line)"></th>
           </tr></thead>
           <tbody id="phist-${i}">${histRows}</tbody>
           <tfoot><tr>
             <td colspan="2" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--muted);border-top:1px solid var(--line)">Total paid</td>
             <td style="padding:6px 10px;font-size:13px;font-weight:800;color:#16a34a;border-top:1px solid var(--line)" id="phist-total-${i}">₹${NUM(totalPaid)}</td>
+            <td style="border-top:1px solid var(--line)"></td>
           </tr></tfoot>
         </table>`:`<div style="color:var(--muted);font-size:12px;padding:8px 10px">No payments recorded yet for this influencer.</div>`}
       </div>
@@ -2136,6 +2160,33 @@ function renderPaymentsTab(){
       const pi=+btn.dataset.pi,rid=btn.dataset.rid,amt=+btn.dataset.amt;
       const note=(document.getElementById(`ptnote-${pi}`)?.value||'').trim()||'Balance payment';
       recordPay(pi,rid,amt,note);
+    };
+  });
+  // Edit payment history row
+  list.querySelectorAll('.ph-edit-btn').forEach(btn=>{
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const pi=+btn.dataset.pi, ei=+btn.dataset.ei, rid=btn.dataset.rid;
+      const row=document.getElementById(`phr-${pi}-${ei}`);
+      const hist=infPayHistory();
+      const p=hist[rid]?.[ei];
+      if(!row||!p)return;
+      document.getElementById(`phrd-${pi}-${ei}`).innerHTML=`<input type="date" id="phed-${pi}-${ei}" value="${p.date||''}" style="padding:3px 6px;border:1px solid var(--line);border-radius:5px;font-size:11px;width:110px">`;
+      document.getElementById(`phra-${pi}-${ei}`).innerHTML=`<input type="number" id="phea-${pi}-${ei}" value="${+p.amount||0}" min="0" style="padding:3px 6px;border:1px solid var(--line);border-radius:5px;font-size:12px;width:80px">`;
+      document.getElementById(`phrn-${pi}-${ei}`).innerHTML=`<input type="text" id="phen-${pi}-${ei}" value="${(p.note||'').replace(/"/g,'&quot;')}" style="padding:3px 6px;border:1px solid var(--line);border-radius:5px;font-size:11px;width:160px">`;
+      btn.parentElement.innerHTML=`<button id="phes-${pi}-${ei}" style="font-size:10px;padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:5px;cursor:pointer;margin-right:4px">Save</button><button id="phec-${pi}-${ei}" style="font-size:10px;padding:2px 8px;border:1px solid var(--line);border-radius:5px;cursor:pointer;background:var(--panel)">Cancel</button>`;
+      document.getElementById(`phes-${pi}-${ei}`)?.addEventListener('click',()=>{
+        const d=infPayHistory();
+        if(!d[rid]||d[rid][ei]==null)return;
+        d[rid][ei]={
+          date:document.getElementById(`phed-${pi}-${ei}`)?.value||p.date,
+          amount:+(document.getElementById(`phea-${pi}-${ei}`)?.value)||0,
+          note:(document.getElementById(`phen-${pi}-${ei}`)?.value||'').trim()
+        };
+        localStorage.setItem('inf_pay_hist_v1',JSON.stringify(d));
+        renderPaymentsTab();
+      });
+      document.getElementById(`phec-${pi}-${ei}`)?.addEventListener('click',()=>renderPaymentsTab());
     };
   });
 }
