@@ -15,13 +15,17 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .app{display:flex;min-height:100vh}
-.nav{width:184px;flex:0 0 184px;background:var(--panel);border-right:1px solid var(--line);padding:14px 10px;position:sticky;top:0;height:100vh;overflow:auto}
-.brand{font-weight:700;font-size:14px;padding:4px 8px 12px;color:var(--brand)}
-.brand small{display:block;color:var(--muted);font-weight:500;font-size:10.5px;margin-top:2px}
-.nav-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 10px 3px;margin-top:4px}
-.nav a{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;cursor:pointer;font-weight:500;margin-bottom:2px}
-.nav a:hover{background:var(--chip)}
-.nav a.on{background:var(--brand);color:#fff}
+.nav{width:200px;flex:0 0 200px;background:var(--panel);border-right:1px solid var(--line);padding:0 8px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px;padding:13px 10px 12px;color:var(--brand);border-bottom:1px solid var(--line);margin:0 -8px 8px}
+.brand small{display:block;color:var(--muted);font-weight:500;font-size:10px;margin-top:1px}
+.brand-logo{width:30px;height:30px;border-radius:8px;flex:0 0 30px;display:block}
+.nav-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--vis);padding:10px 10px 4px;margin-top:2px}
+.nav a{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;border-radius:7px;color:#374151;text-decoration:none;cursor:pointer;font-weight:500;margin-bottom:1px;font-size:12.5px;transition:background .12s;border-left:2px solid transparent}
+.nav a:hover{background:var(--chip);color:var(--ink)}
+.nav a.on{background:#eef2ff;color:var(--brand);font-weight:600;border-left-color:var(--brand)}
+.nav-ico{width:15px;height:15px;flex:0 0 15px;vertical-align:-1px;transition:opacity .12s}
+.nav a:not(.on) .nav-ico{opacity:.65}
+.nav a.on .nav-ico{opacity:1}
 .main{flex:1;min-width:0;padding:14px 16px 60px}
 .filters{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;position:sticky;top:8px;z-index:20}
 .fg{display:flex;flex-direction:column;gap:3px}
@@ -102,12 +106,26 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
 /* Heat map scroll wrapper */
 .heat-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .heat-wrap .heat{min-width:520px}
-/* Referrals kpi responsive */
+/* ── 1200px: small laptop / large tablet (landscape) ── */
+@media(max-width:1200px){
+  .kpis{grid-template-columns:repeat(4,1fr)}
+  .nav{width:188px;flex:0 0 188px}
+}
+/* ── 1024px: iPad Pro / small laptop ── */
+@media(max-width:1024px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .grid3{grid-template-columns:1fr 1fr}
+  .fg select,.fg input{min-width:80px}
+  .filters{gap:8px}
+}
+/* ── 900px: tablet ── */
 @media(max-width:900px){
   .kpis{grid-template-columns:repeat(3,1fr)}
   .grid2,.grid2b,.grid3{grid-template-columns:1fr}
   #ref-kpis{grid-template-columns:repeat(2,1fr)!important}
+  .fg select,.fg input{min-width:76px;font-size:12px}
 }
+/* ── 768px: mobile ── */
 @media(max-width:768px){
   .topbar{display:flex}
   body{font-size:12px}
@@ -126,7 +144,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
   .filter-extras{display:none;flex-wrap:wrap;gap:8px;width:100%}
   .filter-extras.open{display:flex}
   .kpis{grid-template-columns:repeat(2,1fr)}
-  #rev-grid,#inf-kpis{grid-template-columns:repeat(2,1fr)!important;}
+  #rev-grid,#inf-kpis{grid-template-columns:repeat(2,1fr)!important}
   #ref-kpis{grid-template-columns:repeat(2,1fr)!important}
   .chartbox{height:180px}
   .apply{margin-left:0;width:100%}
@@ -138,37 +156,219 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
   h2.tabh{font-size:14px}
   .card{padding:10px}
   .card h3{font-size:12px}
+  .inf-stats{gap:8px}
+  .inf-stat{min-width:34px}
+  .inf-stat .sv{font-size:12px}
+  .inf-emailline{max-width:130px}
+  .inf-sinput{min-width:100px}
+  .grid2,.grid2b,.grid3{grid-template-columns:1fr}
 }
+/* ── 480px: small phone ── */
 @media(max-width:480px){
-  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpis{grid-template-columns:1fr 1fr}
   #rev-grid{grid-template-columns:1fr 1fr!important}
   .kpi .v{font-size:16px}
+  .kpi{padding:10px}
+  .inf-stats{gap:6px}
+  .inf-stat:nth-child(n+3){display:none}
+  .topbar .tm{font-size:13px}
+  .heat-wrap .heat{min-width:480px}
+  .card h3{flex-wrap:wrap;gap:4px}
 }
+/* ── 360px: very small phone ── */
+@media(max-width:360px){
+  .kpis{grid-template-columns:1fr}
+  .kpi .v{font-size:15px}
+  .main{padding:6px 8px 60px}
+}
+/* === Influencer page === */
+.inf-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.inf-hbtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer;color:var(--muted);white-space:nowrap;font-size:12px}
+.inf-hbtn:hover{background:var(--chip)}
+.inf-sinput{flex:1;min-width:180px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font:inherit;color:var(--ink);font-size:12px}
+.inf-sort-row{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.inf-sort-row select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;background:#fff;font-size:12px}
+.inf-pills-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.pill-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.inf-pill{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted)}
+.inf-pill.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pill-sep{color:var(--line);font-size:16px;margin:0 2px}
+.inf-row{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.inf-row-main{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none}
+.inf-row-main:hover{background:var(--chip)}
+.inf-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex:0 0 38px;letter-spacing:.02em}
+.inf-rank{font-size:12px;font-weight:600;color:var(--muted);width:18px;text-align:center;flex:0 0 18px}
+.inf-nameblk{flex:1;min-width:0}
+.inf-nameline{font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.inf-codebd{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 7px;letter-spacing:.05em;font-family:monospace}
+.inf-emailline{color:var(--muted);font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.inf-stats{display:flex;gap:16px;align-items:flex-start}
+.inf-stat{text-align:right;min-width:46px}
+.inf-stat .sv{font-size:14px;font-weight:700;line-height:1.2}
+.inf-stat .sl{font-size:9.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:1px}
+.inf-chev{color:var(--muted);font-size:12px;flex:0 0 14px;margin-left:6px;transition:transform .2s}
+.inf-row.open>.inf-row-main .inf-chev{transform:rotate(180deg)}
+.inf-progbar{height:3px;background:var(--chip)}
+.inf-progfill{height:3px}
+.inf-expand{display:none;padding:10px 14px 12px;border-top:1px solid var(--line)}
+.inf-row.open>.inf-expand{display:block}
+.pay-calc{background:linear-gradient(135deg,#f8faff,#f0f4ff);border:1px solid #dbeafe;border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.pay-seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
+.pay-seg-btn{padding:4px 11px;font-size:11px;font-weight:600;border:none;background:transparent;cursor:pointer;color:var(--muted);white-space:nowrap}
+.pay-seg-btn.on{background:var(--brand);color:#fff}
+.pay-rate-inp{width:76px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-weight:600;text-align:center;background:var(--panel);color:var(--fg)}
+.pay-rate-inp:focus{outline:none;border-color:var(--brand)}
+.pay-out-box{background:var(--panel);border:1px solid #bbf7d0;border-radius:8px;padding:7px 13px;display:flex;align-items:center;gap:8px}
+.pay-out-amt{font-size:17px;font-weight:800;color:#16a34a}
+.social-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.social-inp-wrap{display:flex;flex-direction:column;gap:3px}
+.social-inp-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.social-inp{width:100%;padding:4px 7px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-weight:600;text-align:center;background:var(--panel);color:var(--fg);box-sizing:border-box}
+.social-inp:focus{outline:none;border-color:var(--brand)}
+.social-save-btn{padding:5px 14px;font-size:11px;font-weight:700;background:var(--brand);color:#fff;border:none;border-radius:6px;cursor:pointer}
+.social-save-btn:hover{opacity:.88}
+.inf-ig-badge{display:inline-flex;align-items:center;gap:3px;background:#fce7f3;color:#db2777;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600}
+.inf-referred-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--chip);font-size:12px}
+.inf-referred-row:last-child{border:none}
+.inf-plan-free{color:var(--muted);font-size:11px;flex:0 0 auto}
+.inf-plan-paid{color:var(--paid);font-weight:600;font-size:11px;flex:0 0 auto}
+/* influencer mobile handled in main 768px block above */
+/* === Email Performance === */
+.em-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.em-hbtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer;color:var(--muted);white-space:nowrap;font-size:12px}
+.em-hbtn:hover{background:var(--chip)}
+.em-sinput{flex:1;min-width:160px;max-width:280px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font:inherit;color:var(--ink);font-size:12px}
+.em-view-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.em-view-seg button{border:0;background:#fff;padding:5px 11px;cursor:pointer;font:inherit;font-size:12px;color:var(--muted)}
+.em-view-seg button.on{background:var(--brand);color:#fff}
+.em-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:12px}
+.em-tab{border:none;background:none;padding:8px 14px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap}
+.em-tab:hover{color:var(--ink)}
+.em-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.em-tab-ct{background:var(--chip);border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:5px;color:var(--muted)}
+.em-tab.active .em-tab-ct{background:#dde6ff;color:var(--brand)}
+.em-row{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.em-row-main{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
+.em-row-main:hover{background:var(--chip)}
+.em-rank{font-size:12px;font-weight:600;color:var(--muted);width:18px;text-align:center;flex:0 0 18px;padding-top:3px}
+.em-info{flex:1;min-width:0}
+.em-name{font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.3}
+.em-subject{color:var(--muted);font-size:11px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px}
+.em-meta{font-size:10.5px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.em-plat{font-size:10px;font-weight:700;border-radius:4px;padding:1px 6px;letter-spacing:.03em}
+.em-plat-loops{background:#eef2ff;color:#3b5bdb}
+.em-plat-ph{background:#fef3c7;color:#92400e}
+.em-status{font-size:10px;font-weight:600;border-radius:4px;padding:1px 6px}
+.em-status-sent{background:#dcfce7;color:#166534}
+.em-status-draft{background:#f3f4f6;color:#6b7280}
+.em-status-scheduled{background:#fef9c3;color:#854d0e}
+.em-metrics{display:flex;gap:14px;align-items:flex-start;flex-shrink:0}
+.em-metric{text-align:right;min-width:52px}
+.em-metric .mv{font-size:14px;font-weight:700;line-height:1.2}
+.em-metric .ml{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.em-metric .mr{font-size:10.5px;color:var(--muted);line-height:1.1;margin-top:1px}
+.em-chev{color:var(--muted);font-size:12px;flex:0 0 14px;margin-left:4px;transition:transform .2s;padding-top:3px}
+.em-row.open>.em-row-main .em-chev{transform:rotate(180deg)}
+.em-progbar{height:3px;background:var(--chip);display:flex;gap:1px}
+.em-prog-d{height:3px;background:var(--sig);transition:width .3s}
+.em-prog-o{height:3px;background:var(--paid);transition:width .3s}
+.em-prog-c{height:3px;background:var(--ret);transition:width .3s}
+.em-expand{display:none;padding:12px 14px 14px;border-top:1px solid var(--line)}
+.em-row.open>.em-expand{display:block}
+.em-detail-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.em-dkpi{background:var(--chip);border-radius:8px;padding:9px 10px}
+.em-dkpi .dv{font-size:17px;font-weight:700}
+.em-dkpi .dp{font-size:11px;color:var(--muted);margin-top:1px}
+.em-dkpi .dl{font-size:9.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+.em-notes{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:12px;color:var(--ink);resize:vertical;min-height:46px;margin-top:12px}
+.em-notes:focus{outline:none;border-color:var(--brand)}
+.em-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+.em-modal.show{display:flex}
+.em-modal-box{background:#fff;border-radius:16px;padding:24px;width:420px;max-width:92vw;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+@media(max-width:900px){.em-metrics{gap:8px}.em-metric{min-width:40px}.em-metric .mv{font-size:12px}.em-subject{max-width:200px}.em-detail-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){.em-metrics{gap:6px}.em-metric:nth-child(n+5){display:none}.em-subject{max-width:140px}.em-detail-grid{grid-template-columns:1fr 1fr}}
+.inf-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:12px}
+.inf-tab{border:none;background:none;padding:8px 14px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap}
+.inf-tab:hover{color:var(--ink)}
+.inf-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.inf-tab-ct{background:var(--chip);border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:5px;color:var(--muted)}
+.inf-tab.active .inf-tab-ct{background:#dde6ff;color:var(--brand)}
+/* Add influencer modal */
+.inf-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+.inf-modal.show{display:flex}
+.inf-modal-box{background:#fff;border-radius:16px;padding:24px;width:380px;max-width:92vw;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.inf-modal-box h3{margin:0 0 18px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.inf-modal-close{border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);line-height:1;padding:2px}
+.inf-field{margin-bottom:14px}
+.inf-field label{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px}
+.inf-field input,.inf-field select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:#fff;color:var(--ink)}
+.inf-field input:focus,.inf-field select:focus{outline:none;border-color:var(--brand)}
+.inf-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+/* --- Floating Chat --- */
+.chat-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--brand);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(59,91,219,.4);z-index:200;transition:transform .15s}
+.chat-fab:hover{transform:scale(1.08)}
+.chat-panel{position:fixed;bottom:88px;right:24px;width:400px;max-height:600px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.13);z-index:199;display:flex;flex-direction:column;overflow:hidden;transition:opacity .18s,transform .18s}
+.chat-panel.hidden{opacity:0;transform:translateY(10px);pointer-events:none}
+.chat-hdr{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.chat-hdr h4{margin:0;font-size:13px;font-weight:700;flex:1}
+.chat-hdr small{color:var(--muted);font-size:10.5px}
+.chat-hdr .close-btn{border:0;background:none;cursor:pointer;font-size:18px;color:var(--muted);line-height:1;padding:2px 4px}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.chat-msg{display:flex;flex-direction:column;gap:4px}
+.chat-msg.user{align-items:flex-end}
+.chat-msg.ai{align-items:flex-start;width:100%}
+.chat-bubble{padding:8px 12px;border-radius:12px;font-size:12.5px;line-height:1.5;max-width:88%}
+.chat-msg.user .chat-bubble{background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.ai .chat-bubble{background:var(--chip);color:var(--ink);border-bottom-left-radius:4px}
+.chat-chart{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;margin-top:4px}
+.chat-chart h5{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--ink)}
+.chat-number{font-size:34px;font-weight:800;color:var(--brand);padding:6px 0}
+.chat-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;display:block;overflow-x:auto}
+.chat-tbl th,.chat-tbl td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.chat-tbl th:first-child,.chat-tbl td:first-child{text-align:left}
+.chat-tbl th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.03em}
+.chat-loading{display:flex;gap:5px;align-items:center;padding:10px 12px;background:var(--chip);border-radius:12px;border-bottom-left-radius:4px}
+.chat-loading span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:cbounce .8s ease-in-out infinite}
+.chat-loading span:nth-child(2){animation-delay:.15s}
+.chat-loading span:nth-child(3){animation-delay:.3s}
+@keyframes cbounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.chat-foot{padding:8px 10px;border-top:1px solid var(--line);display:flex;gap:6px;background:var(--panel);flex-shrink:0}
+.chat-foot input{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;color:var(--ink);font-size:12.5px;outline:none}
+.chat-foot input:focus{border-color:var(--brand)}
+.chat-foot button{border:0;background:var(--brand);color:#fff;border-radius:8px;padding:7px 14px;font-weight:600;cursor:pointer;font-size:12.5px}
+.chat-foot button:disabled{opacity:.5;cursor:default}
+.chat-sugs{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 4px}
+.chat-sug{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--ink);transition:background .1s}
+.chat-sug:hover{background:var(--chip)}
 </style>
 </head>
 <body>
 <div class="topbar">
+  <img src="https://nextraise.ai/images/nextraise-logo.png" alt="" style="width:28px;height:28px;border-radius:7px;flex:0 0 28px">
   <div class="tm">NextRaise<small>Growth Analytics · Live</small></div>
-  <button class="hamburger" id="hamburger" aria-label="Open navigation">☰</button>
+  <button class="hamburger" id="hamburger" aria-label="Open navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+  </button>
 </div>
 <div class="nav-bd" id="nav-bd"></div>
 <div class="app">
   <nav class="nav">
-    <div class="brand">NextRaise<small>Growth Analytics · Live</small></div>
+    <div class="brand"><img class="brand-logo" src="https://nextraise.ai/images/nextraise-logo.png" alt="NextRaise"><div>NextRaise<small>Growth Analytics · Live</small></div></div>
     <div class="nav-section">L0 Overview</div>
-    <a data-tab="overview" class="on">📊 Overview</a>
+    <a data-tab="overview" class="on"><svg class="nav-ico" viewBox="0 0 20 20"><rect x="2" y="11" width="4" height="7" rx="1" fill="currentColor"/><rect x="8" y="7" width="4" height="11" rx="1" fill="currentColor"/><rect x="14" y="3" width="4" height="15" rx="1" fill="currentColor"/></svg> Overview</a>
     <div class="nav-section">L1 Funnels</div>
-    <a data-tab="acquisition">🎯 Acquisition</a>
-    <a data-tab="activation">⚡ Activation</a>
-    <a data-tab="monetization">💳 Monetization</a>
-    <a data-tab="retention">🔁 Retention</a>
+    <a data-tab="acquisition"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h14l-5 7v6l-4-2V10z"/></svg> Acquisition</a>
+    <a data-tab="activation"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L4 12h6l-1 6 7-10h-6z"/></svg> Activation</a>
+    <a data-tab="monetization"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16"/><path d="M5.5 13h3"/></svg> Monetization</a>
+    <a data-tab="retention"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 5A7.5 7.5 0 104 15.5"/><path d="M4 11v5h5"/></svg> Retention</a>
     <div class="nav-section">Growth</div>
-    <a data-tab="lifecycle">✉️ Lifecycle</a>
-    <a data-tab="referrals">🔗 Referrals</a>
-    <a data-tab="influencers">👥 Influencers</a>
+    <a data-tab="lifecycle"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="12" rx="1.5"/><path d="M2 7l8 5 8-5"/></svg> Lifecycle</a>
+    <a data-tab="email"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="9" rx="1.5"/><path d="M2 7.5l6 3.5 6-3.5"/><rect x="15" y="9" width="2.5" height="5" rx=".5" fill="currentColor" stroke="none"/><rect x="13" y="7" width="2" height="7" rx=".5" fill="currentColor" stroke="none"/></svg> Emails</a>
+    <a data-tab="referrals"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 11.5a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1.1 1.1"/><path d="M11.5 8.5a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1.1-1.1"/></svg> Referrals</a>
+    <a data-tab="influencers"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="3"/><path d="M1 18a6 6 0 0112 0"/><path d="M14.5 5a2.5 2.5 0 010 5M18 18a5.5 5.5 0 00-5.5-5"/></svg> Influencers</a>
     <div class="nav-section">Monitor</div>
-    <a data-tab="features">🧩 Features</a>
-    <a data-tab="dataquality">🛡️ Data Quality</a>
+    <a data-tab="features"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg> Features</a>
+    <a data-tab="dataquality"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 5v5.5c0 4.5 3 7.5 7 8.5 4-1 7-4 7-8.5V5z"/><path d="M7 10.5l2.5 2.5 3.5-4"/></svg> Data Quality</a>
   </nav>
   <div class="main">
     <div class="filters">
@@ -325,6 +525,48 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
       </div>
     </section>
 
+    <!-- EMAIL PERFORMANCE -->
+    <section data-panel="email" style="display:none">
+      <h2 class="tabh">Email Performance <span class="pg-badge">posthog</span><span class="pg-badge" style="background:var(--brand)">loops</span></h2>
+      <div class="em-hdr">
+        <button id="em-refresh" class="em-hbtn">↻ Refresh</button>
+        <input id="em-search" class="em-sinput" placeholder="Search campaign or subject…">
+        <select id="em-sort" style="border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:12px;color:var(--ink);background:#fff;cursor:pointer">
+          <option value="date_desc">↓ Date (newest)</option>
+          <option value="date_asc">↑ Date (oldest)</option>
+          <option value="sent_desc">↓ Sent</option>
+          <option value="opens_desc">↓ Opens</option>
+          <option value="open_rate_desc">↓ Open Rate</option>
+          <option value="clicks_desc">↓ Clicks</option>
+          <option value="ctor_desc">↓ CTOR</option>
+          <option value="unsubs_desc">↓ Unsubs</option>
+          <option value="bounces_desc">↓ Bounces</option>
+        </select>
+        <div class="em-view-seg" id="em-view-seg"><button data-v="num" class="on">#</button><button data-v="pct">%</button></div>
+        <button id="em-export" class="em-hbtn" style="margin-left:auto">↓ Export XLS</button>
+        <button id="em-add" class="em-hbtn" style="background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600">＋ Add Campaign</button>
+      </div>
+      <div class="kpis" id="em-kpis" style="grid-template-columns:repeat(5,1fr)"></div>
+      <div class="em-tabs" id="em-tabs">
+        <button class="em-tab active" data-ep="all">All <span class="em-tab-ct" id="em-ct-all">—</span></button>
+        <button class="em-tab" data-ep="campaign">One-time Campaigns <span class="em-tab-ct" id="em-ct-camp">—</span></button>
+        <button class="em-tab" data-ep="automation">Automations <span class="em-tab-ct" id="em-ct-auto">—</span></button>
+      </div>
+      <div id="em-list"><div class="loadingcard">Loading…</div></div>
+      <div class="em-modal" id="em-modal">
+        <div class="em-modal-box">
+          <h3 style="margin:0 0 16px;font-size:15px;display:flex;justify-content:space-between;align-items:center">Add Loops Campaign<button onclick="document.getElementById('em-modal').classList.remove('show')" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted)">×</button></h3>
+          <div class="inf-field"><label>Loops Campaign ID</label>
+            <input id="em-modal-id" placeholder="Paste Loops campaign ID (e.g. clxx…)" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:#fff"></div>
+          <div id="em-modal-err" style="color:var(--bad);font-size:12px;margin-bottom:8px;display:none"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+            <button onclick="document.getElementById('em-modal').classList.remove('show')" style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 16px;font:inherit;cursor:pointer">Cancel</button>
+            <button id="em-modal-fetch" style="border:0;background:var(--brand);color:#fff;border-radius:8px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer">Fetch & Add</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- FEATURES -->
     <section data-panel="features" style="display:none">
       <h2 class="tabh">🧩 Feature Adoption</h2>
@@ -344,19 +586,18 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
       <h2 class="tabh">🔗 Referrals <span class="pg-badge">postgres</span></h2>
       <div class="kpis" id="ref-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
       <div class="card">
-        <h3>Referral leaderboard
-          <span class="tip" data-tip="Source: postgres.users. referred_by_id links who referred whom. Converted = referred user whose plan_cache is not free/null. Revenue = their completed INR payments from postgres.payments.">i</span>
-          <span class="sub">users referred · converted to paid · revenue generated</span>
-        </h3>
-        <table class="bd" id="ref-top"><thead></thead><tbody></tbody></table>
-      </div>
-      <div class="card">
         <h3>🤝 Affiliate Program <span class="pg-badge">postgres</span>
           <span class="tip" data-tip="Source: postgres.referral_rewards. Status='granted' = reward issued. Reversed = clawed back. Days = free days granted as reward.">i</span>
           <span class="sub" id="aff-sub"></span>
         </h3>
         <div class="kpis" id="aff-kpis" style="grid-template-columns:repeat(4,1fr);margin:0 0 14px"></div>
         <table class="bd" id="aff-plans"><thead></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Top Referrers <span class="pg-badge">postgres</span>
+          <span class="tip" data-tip="Users who referred others. Click a row to see who they referred — plan, payment status, and join date.">i</span>
+        </h3>
+        <div id="ref-referrer-list"><div class="loadingcard">Loading…</div></div>
       </div>
       <div class="card">
         <h3>Referral engagement funnel
@@ -368,32 +609,80 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
 
     <!-- INFLUENCERS -->
     <section data-panel="influencers" style="display:none">
-      <h2 class="tabh">👥 Influencers <span class="pg-badge">postgres</span></h2>
-      <div class="kpis" id="inf-kpis" style="grid-template-columns:repeat(5,1fr);margin-bottom:12px"></div>
-      <div class="card">
-        <h3>Influencer performance
-          <span class="tip" data-tip="Source: postgres.users. referred_by_id links who referred whom. Revenue = INR payments from postgres.payments by referred users (from May 1 2026).">i</span>
-          <span class="sub" id="inf-sub"></span>
-        </h3>
-        <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap">
-          <div class="fg"><label>Performance</label>
-            <select id="inf-perf">
-              <option value="all">All</option>
-              <option value="converted">Has Pro Conversions</option>
-              <option value="10plus">10+ Referrals</option>
-            </select>
-          </div>
-          <div class="fg"><label>Referral Code</label>
-            <select id="inf-code-f">
-              <option value="all">All</option>
-              <option value="has_code">Has Code</option>
-            </select>
-          </div>
-          <button id="inf-export" style="margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer;color:var(--muted)">⬇ Export CSV</button>
+      <h2 class="tabh">👥 Influencers <span class="pg-badge">postgres</span> <span class="pg-badge" style="background:var(--brand)">posthog</span></h2>
+      <!-- Header bar -->
+      <div class="inf-hdr">
+        <button id="inf-refresh" class="inf-hbtn">↻ Refresh</button>
+        <input id="inf-search" class="inf-sinput" placeholder="Filter by influencer name, email or code…" />
+        <div class="inf-sort-row"><span>SORT</span>
+          <select id="inf-sort">
+            <option value="referrals_desc">Referrals — High → Low</option>
+            <option value="pro_conversions_desc">Pro Conversions — High → Low</option>
+            <option value="revenue_inr_desc">Revenue — High → Low</option>
+            <option value="last_referral_desc">Last Referral — Latest (Newest first)</option>
+            <option value="last_referral_asc">Last Referral — Oldest (Oldest first)</option>
+            <option value="referrals_asc">Referrals — Low → High</option>
+          </select>
         </div>
-        <table class="bd" id="inf-table"><thead></thead><tbody></tbody></table>
+        <button id="inf-export" class="inf-hbtn">⬇ Export CSV</button>
+        <button id="inf-add" class="inf-hbtn" style="background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600">＋ Add Influencer</button>
       </div>
+      <!-- Filter pills -->
+      <div class="inf-pills-row">
+        <button id="inf-inf-only" class="inf-pill active" style="background:var(--brand);color:#fff;border-color:var(--brand)">★ Influencers only</button>
+        <button id="inf-all-ref" class="inf-pill">All referrers</button>
+        <span class="pill-sep">|</span>
+        <span class="pill-label">PERFORMANCE</span>
+        <button class="inf-pill active" data-filter="perf" data-val="all">All</button>
+        <button class="inf-pill" data-filter="perf" data-val="converted">Has Pro Conversions</button>
+        <button class="inf-pill" data-filter="perf" data-val="10plus">10+ Referrals</button>
+        <span class="pill-sep">|</span>
+        <span class="pill-label">REFERRAL CODE</span>
+        <button class="inf-pill active" data-filter="code" data-val="all">All</button>
+        <button class="inf-pill" data-filter="code" data-val="has_code">Has Code</button>
+      </div>
+      <!-- Platform tabs -->
+      <div class="inf-tabs">
+        <button class="inf-tab active" data-platform="all">All <span class="inf-tab-ct" id="tab-all-ct"></span></button>
+        <button class="inf-tab" data-platform="instagram">📸 Instagram <span class="inf-tab-ct" id="tab-ig-ct"></span></button>
+        <button class="inf-tab" data-platform="twitter">🐦 Twitter <span class="inf-tab-ct" id="tab-tw-ct"></span></button>
+        <button class="inf-tab" data-platform="payments">💰 Payments <span class="inf-tab-ct" id="tab-pay-ct"></span></button>
+      </div>
+      <!-- KPI cards (6) -->
+      <div class="kpis" id="inf-kpis" style="grid-template-columns:repeat(6,1fr);margin-bottom:12px"></div>
+      <!-- Subtitle -->
+      <p id="inf-sub" style="font-size:12px;color:var(--muted);margin:0 0 10px"></p>
+      <!-- Rows -->
+      <div id="inf-list"></div>
     </section>
+
+    <!-- Add Influencer Modal -->
+    <div class="inf-modal" id="inf-modal">
+      <div class="inf-modal-box">
+        <h3>Set Influencer Properties <button class="inf-modal-close" id="inf-modal-close">✕</button></h3>
+        <div class="inf-field">
+          <label>Email</label>
+          <input id="inf-add-email" type="email" placeholder="user@example.com">
+        </div>
+        <div class="inf-field">
+          <label>Platform</label>
+          <select id="inf-add-platform">
+            <option value="">None / General</option>
+            <option value="instagram">📸 Instagram</option>
+            <option value="twitter">🐦 Twitter</option>
+          </select>
+        </div>
+        <div class="inf-field">
+          <label>Video / Collab Go-Live Date</label>
+          <input id="inf-add-live-date" type="date" placeholder="YYYY-MM-DD">
+        </div>
+        <div id="inf-modal-result" style="font-size:12px;min-height:18px;margin-bottom:12px"></div>
+        <div class="inf-modal-actions">
+          <button id="inf-modal-cancel" style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 16px;font:inherit;cursor:pointer;color:var(--muted)">Cancel</button>
+          <button id="inf-modal-submit" style="border:0;background:var(--brand);color:#fff;border-radius:8px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer">Set as Influencer</button>
+        </div>
+      </div>
+    </div>
 
     <!-- DATA QUALITY -->
     <section data-panel="dataquality" style="display:none">
@@ -421,9 +710,11 @@ const PCT=(a,b)=>b>0?(100*a/b).toFixed(1)+'%':'—';
 const EXCL_EXPR="person_id NOT IN COHORT 278743 AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND lower(coalesce(person.properties.email,'')) NOT LIKE '%test%'";
 const PG_EXCL="user_email NOT LIKE '%@nextraise.ai' AND user_email NOT LIKE '%@creditdharma.in' AND lower(user_email) NOT LIKE '%test%'";
 const h=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const CHMED="person.properties.first_touch_medium", CHSRC="person.properties.first_touch_source";
-const CHEXPR_F=`multiIf((${CHMED}='online_ads' AND ${CHSRC}='google_ads') OR ${CHMED}='cpc','SEM', (${CHMED}='online_ads' AND ${CHSRC}='meta_ads') OR ${CHMED} IN ('paid','social'),'Paid social', ${CHMED} IN ('influencer','influencer_boost'),'Influencer', ${CHMED}='extension','Extension', ${CHMED}='email','Email', coalesce(${CHMED},'')='','Unattributed','Other')`;
-const CHEXPR_G=CHEXPR_F.replace(/person\.properties\.first_touch_medium/g,"any(person.properties.first_touch_medium)").replace(/person\.properties\.first_touch_source/g,"any(person.properties.first_touch_source)");
+// Fall back to PostHog auto-captured $initial_utm_* when custom first_touch_* props are missing
+const CHMED="coalesce(nullIf(person.properties.first_touch_medium,''),nullIf(person.properties.$initial_utm_medium,''))";
+const CHSRC="coalesce(nullIf(person.properties.first_touch_source,''),nullIf(person.properties.$initial_utm_source,''))";
+const CHEXPR_F=`multiIf((${CHMED}='online_ads' AND ${CHSRC}='google_ads') OR ${CHMED}='cpc' OR ${CHSRC}='google_ads','SEM', (${CHMED}='online_ads' AND ${CHSRC}='meta_ads') OR ${CHMED} IN ('paid','social') OR ${CHSRC}='meta_ads','Paid social', ${CHMED} IN ('influencer','influencer_boost') OR ${CHSRC} IN ('instagram_influencer','mani_instagram_influencer','twitter_influencer','instagram','ig','instagran'),'Influencer', ${CHMED}='extension' OR ${CHSRC}='chrome_extension','Extension', ${CHMED}='email' OR ${CHSRC}='loops','Email', coalesce(${CHMED},'')='' AND coalesce(${CHSRC},'')='','Unattributed','Other')`;
+const CHEXPR_G=CHEXPR_F.replace(/person\.properties\.first_touch_medium/g,"any(person.properties.first_touch_medium)").replace(/person\.properties\.first_touch_source/g,"any(person.properties.first_touch_source)").replace(/person\.properties\.\$initial_utm_medium/g,"any(person.properties.$initial_utm_medium)").replace(/person\.properties\.\$initial_utm_source/g,"any(person.properties.$initial_utm_source)");
 
 const DIM_EXPR={
   country:"multiIf(person.properties.$geoip_country_code='IN','India', person.properties.$geoip_country_code IN ('US','CA'),'US/CA', coalesce(person.properties.$geoip_country_code,'')='','Unknown','RoW')",
@@ -512,7 +803,7 @@ function dimW(){
     else if(f==='SEM')w.push("person.properties.first_touch_landing LIKE '/lp/%'");
     else if(f==='Direct')w.push("coalesce(person.properties.first_touch_landing,'')=''");
     else w.push("(person.properties.first_touch_landing!='/' AND person.properties.first_touch_landing NOT LIKE '/lp/%' AND coalesce(person.properties.first_touch_landing,'')!='')");}
-  if(state.channel!=='All'){const map={'SEM':`((${CHMED}='online_ads' AND ${CHSRC}='google_ads') OR ${CHMED}='cpc')`,'Paid social':`((${CHMED}='online_ads' AND ${CHSRC}='meta_ads') OR ${CHMED} IN ('paid','social'))`,'Influencer':`${CHMED} IN ('influencer','influencer_boost')`,'Extension':`${CHMED}='extension'`,'Email':`${CHMED}='email'`,'Unattributed':`coalesce(${CHMED},'')=''`,'Other':`(${CHMED} NOT IN ('online_ads','cpc','paid','social','influencer','influencer_boost','extension','email') AND coalesce(${CHMED},'')!='')`};w.push(map[state.channel]||'1=1');}
+  if(state.channel!=='All'){const map={'SEM':`((${CHMED}='online_ads' AND ${CHSRC}='google_ads') OR ${CHMED}='cpc' OR ${CHSRC}='google_ads')`,'Paid social':`((${CHMED}='online_ads' AND ${CHSRC}='meta_ads') OR ${CHMED} IN ('paid','social') OR ${CHSRC}='meta_ads')`,'Influencer':`(${CHMED} IN ('influencer','influencer_boost') OR ${CHSRC} IN ('instagram_influencer','mani_instagram_influencer','twitter_influencer','instagram','ig','instagran'))`,'Extension':`(${CHMED}='extension' OR ${CHSRC}='chrome_extension')`,'Email':`(${CHMED}='email' OR ${CHSRC}='loops')`,'Unattributed':`(coalesce(${CHMED},'')='' AND coalesce(${CHSRC},'')='')`,'Other':`(${CHMED} NOT IN ('online_ads','cpc','paid','social','influencer','influencer_boost','extension','email') AND ${CHSRC} NOT IN ('google_ads','meta_ads','chrome_extension','loops','instagram_influencer','mani_instagram_influencer','twitter_influencer','instagram','ig','instagran') AND NOT (coalesce(${CHMED},'')='' AND coalesce(${CHSRC},'')=''))`};w.push(map[state.channel]||'1=1');}
   if(state.plan!=='All')w.push(state.plan==='Paid'?"person.properties.is_paid=true":"coalesce(person.properties.is_paid,false)=false");
   return w;
 }
@@ -571,8 +862,7 @@ function kpiSQL(){
   return `SELECT uniqIf(person_id,event='$pageview') AS visitors, uniqIf(person_id,event='signup_complete') AS signups, 0 AS activated, uniqIf(person_id,event='payment_completed') AS paid, uniqIf(person_id,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='false') AS returning FROM events WHERE ${baseWhere()}`;
 }
 function activatedSQL(){
-  /* strict intersection: persons who both signed up AND viewed a result page in this window */
-  return `SELECT countIf(had_signup AND had_result) AS activated FROM (SELECT person_id, max(event='signup_complete') AS had_signup, max(${VAL_COND}) AS had_result FROM events WHERE ${baseWhere()} GROUP BY person_id)`;
+  return `SELECT countIf(f0=1 AND f1=1) AS activated FROM (SELECT person_id, maxIf(1, event='signup_complete') AS f0, maxIf(1, ${VAL_COND}) AS f1 FROM events WHERE ${baseWhere()} GROUP BY person_id)`;
 }
 function trendSQL(){
   const bucket=state.gran==='hour'?"toStartOfHour(timestamp)":"toDate(timestamp)";
@@ -749,22 +1039,24 @@ async function loadAcquisition(){
 }
 
 async function loadActivation(){
-  await funnelInto('act-funnel',[
-    {label:'Signed up',cond:"event='signup_complete'",color:'var(--sig)',tip:'New accounts (signup_complete). Funnel base.'},
-    {label:'Onboarding done',cond:"event IN ('onboarding_complete','onboarding_complete_server')",color:'var(--act)',tip:'Finished onboarding. SEM flow auto-completes this.'},
-    {label:'Resume uploaded',cond:"event='resume_upload_success'",color:'#6366f1',tip:'Successfully uploaded a resume (resume_upload_success).'},
-    {label:'Saw a result',cond:RV,color:'var(--paid)',tip:'Viewed ATS (/comprehensive-analysis/results) or Job-Match/Tailor (/tailor). = "got value".'}
-  ],[],{cumulative:true});
-  await funnelInto('act-upload',[
-    {label:'Resume selected',cond:"event='resume_upload'",color:'var(--vis)',tip:'Resume file chosen for upload (resume_upload).'},
-    {label:'Upload succeeded',cond:"event='resume_upload_success'",color:'var(--paid)',tip:'Upload completed (resume_upload_success). Failures shown in error card below.'}
+  await Promise.all([
+    funnelInto('act-funnel',[
+      {label:'Signed up',cond:"event='signup_complete'",color:'var(--sig)',tip:'New accounts (signup_complete). Funnel base.'},
+      {label:'Onboarding done',cond:"event IN ('onboarding_complete','onboarding_complete_server')",color:'var(--act)',tip:'Finished onboarding. SEM flow auto-completes this.'},
+      {label:'Resume uploaded',cond:"event='resume_upload_success'",color:'#6366f1',tip:'Successfully uploaded a resume (resume_upload_success).'},
+      {label:'Saw a result',cond:RV,color:'var(--paid)',tip:'Viewed ATS (/comprehensive-analysis/results) or Job-Match/Tailor (/tailor). = "got value".'}
+    ],[],{cumulative:true}),
+    funnelInto('act-upload',[
+      {label:'Resume selected',cond:"event='resume_upload'",color:'var(--vis)',tip:'Resume file chosen for upload (resume_upload).'},
+      {label:'Upload succeeded',cond:"event='resume_upload_success'",color:'var(--paid)',tip:'Upload completed (resume_upload_success). Failures shown in error card below.'}
+    ]),
+    tableInto('feat-reach-act',
+      "multiIf(event='$pageview' AND properties.$pathname LIKE '/comprehensive-analysis/results%','ATS result viewed', event='$pageview' AND properties.$pathname LIKE '/tailor/%','Tailor/Job-match viewed', event='job_match_analyzed','Job match run (server)', event='resume_downloaded','Resume downloaded', event='extension_installed','Extension installed', event='tracker_pipeline_view','Job tracker used', event='comprehensive_analysis_results_view','Comprehensive analysis','(other)')",
+      [{label:'Users',cond:"1=1"}],
+      ["(event IN ('job_match_analyzed','resume_downloaded','extension_installed','tracker_pipeline_view','comprehensive_analysis_results_view') OR (event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')))"],
+      {label:'Feature',tip:'Unique users who reached each feature. ATS & Tailor by result-page view; others by core event.'}),
+    errorsInto('act-err',['resume_upload_failed','onboarding_error'])
   ]);
-  await tableInto('feat-reach-act',
-    "multiIf(event='$pageview' AND properties.$pathname LIKE '/comprehensive-analysis/results%','ATS result viewed', event='$pageview' AND properties.$pathname LIKE '/tailor/%','Tailor/Job-match viewed', event='job_match_analyzed','Job match run (server)', event='resume_downloaded','Resume downloaded', event='extension_installed','Extension installed', event='tracker_pipeline_view','Job tracker used', event='comprehensive_analysis_results_view','Comprehensive analysis','(other)')",
-    [{label:'Users',cond:"1=1"}],
-    ["(event IN ('job_match_analyzed','resume_downloaded','extension_installed','tracker_pipeline_view','comprehensive_analysis_results_view') OR (event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')))"],
-    {label:'Feature',tip:'Unique users who reached each feature. ATS & Tailor by result-page view; others by core event.'});
-  await errorsInto('act-err',['resume_upload_failed','onboarding_error']);
 }
 
 async function loadMonetization(){
@@ -870,7 +1162,7 @@ async function loadReferrals(){
   try{
     const [summary,revRow]=await Promise.all([
       q(`SELECT countIf(referral_code IS NOT NULL AND referral_code!='') AS has_code, countIf(referred_by_id IS NOT NULL) AS referred_signups, countIf(referred_by_id IS NOT NULL AND plan_cache NOT IN ('free','') AND plan_cache IS NOT NULL) AS referred_paid FROM postgres.users WHERE email NOT LIKE '%@nextraise.ai' AND email NOT LIKE '%@creditdharma.in' AND lower(email) NOT LIKE '%test%'`),
-      q(`SELECT count(DISTINCT p.user_id) AS payers, round(sum(p.amount)) AS revenue FROM postgres.payments p INNER JOIN postgres.users u ON u.id=p.user_id AND u.referred_by_id IS NOT NULL WHERE p.status='completed' AND p.currency='INR' AND ${PG_EXCL}`)
+      q(`SELECT count(DISTINCT p.user_id) AS payers, round(sum(p.amount)) AS revenue FROM postgres.payments p INNER JOIN postgres.users u ON u.id=p.user_id AND u.referred_by_id IS NOT NULL WHERE p.status='completed' AND p.currency='INR' AND p.created_at>='2026-05-01' AND p.user_email NOT LIKE '%@nextraise.ai' AND p.user_email NOT LIKE '%@creditdharma.in' AND lower(p.user_email) NOT LIKE '%test%'`)
     ]);
     const s=summary[0]||{},rv=revRow[0]||{};
     document.getElementById('ref-kpis').innerHTML=[
@@ -880,20 +1172,6 @@ async function loadReferrals(){
       ['Referred revenue',`₹${NUM(rv.revenue||0)}`,'--mrr'],
     ].map(([n,v,c])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${c})"></span>${n}</div><div class="v" style="font-size:${typeof v==='string'&&v.length>8?'16px':'22px'}">${typeof v==='number'?NUM(v):v}</div></div>`).join('');
   }catch(e){document.getElementById('ref-kpis').innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
-
-  const tb=document.querySelector('#ref-top tbody'),th=document.querySelector('#ref-top thead');
-  if(tb){tb.innerHTML='<tr><td class="loadingcard">Loading…</td></tr>';
-    try{
-      const rows=await q(`SELECT r.name AS rn, r.email AS re, r.referral_code AS code, count(u.id) AS referred, countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS converted, round(COALESCE(SUM(pay.amount),0)) AS rev_inr FROM postgres.users r INNER JOIN postgres.users u ON u.referred_by_id=r.id LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' GROUP BY r.name,r.email,r.referral_code HAVING referred>0 ORDER BY referred DESC LIMIT 50`);
-      const mx=Math.max(...rows.map(r=>+r.referred||0),1);
-      if(th)th.innerHTML='<tr><th>Referrer</th><th>Code</th><th>Referred</th><th>Paid</th><th>Conv%</th><th>Revenue (INR)</th></tr>';
-      tb.innerHTML=rows.map(r=>`<tr>
-        <td class="barcell"><div class="mini" style="width:${100*(+r.referred||0)/mx}%"></div><span><b>${h(r.rn||'')}</b><br><span style="color:var(--muted);font-size:10.5px">${h(r.re||'')}</span></span></td>
-        <td><code style="background:var(--chip);padding:2px 7px;border-radius:5px;font-size:11px">${h(r.code||'')}</code></td>
-        <td>${NUM(r.referred)}</td><td>${NUM(r.converted)}</td>
-        <td>${PCT(+r.converted,+r.referred)}</td><td>₹${NUM(r.rev_inr)}</td>
-      </tr>`).join('')||'<tr><td class="loadingcard" colspan="6">No referrals found.</td></tr>';
-    }catch(e){tb.innerHTML=`<tr><td class="cardErr" colspan="6">⚠ ${e.message}</td></tr>`;}}
 
   /* ---- Affiliate Program ---- */
   const affKpis=document.getElementById('aff-kpis');
@@ -939,106 +1217,1188 @@ async function loadReferrals(){
     </tr>`).join('')||'<tr><td class="loadingcard" colspan="6">No rewards yet.</td></tr>';
   }catch(e){if(affKpis)affKpis.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
 
-  /* ---- Referral engagement funnel (PostHog events) ---- */
+  /* ---- Top Referrers expandable list ---- */
+  const refListEl=document.getElementById('ref-referrer-list');
+  if(refListEl){
+    try{
+      const referrers=await q(`SELECT r.id AS referrer_id, r.name AS name, r.email AS email, coalesce(r.referral_code,'') AS code, count(u.id) AS referrals, countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS pro_conversions, round(coalesce(sum(CASE WHEN pay.status='completed' AND pay.currency='INR' THEN pay.amount ELSE 0 END),0)) AS revenue_inr FROM postgres.users r INNER JOIN postgres.users u ON u.referred_by_id=r.id LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' GROUP BY r.id, r.name, r.email, r.referral_code HAVING count(u.id)>0 ORDER BY referrals DESC LIMIT 50`);
+      if(!referrers.length){refListEl.innerHTML='<div class="loadingcard">No referrers yet.</div>';return;}
+      const mx=Math.max(...referrers.map(r=>+(r.referrals||0)),1);
+      refListEl.innerHTML=referrers.map((r,i)=>{
+        const col=avatarColor(r.email||r.name||'');
+        const conv=+(r.referrals||0)>0?(+(r.pro_conversions||0)/+(r.referrals||0)*100).toFixed(0)+'%':'0%';
+        const pct=100*(+(r.referrals||0))/mx;
+        const codeBadge=r.code?`<span class="inf-codebd" style="background:${col}22;color:${col}">${h(r.code)}</span>`:'';
+        return `<div class="inf-row" data-ref-idx="${i}" style="cursor:pointer">
+          <div class="inf-row-main">
+            <span class="inf-rank">${i+1}</span>
+            <div class="inf-avatar" style="background:${col}">${initials(r.name||'')}</div>
+            <div class="inf-nameblk">
+              <div class="inf-nameline">${h(r.name||'—')}${codeBadge}</div>
+              <div class="inf-emailline">${h(r.email||'')}</div>
+            </div>
+            <div class="inf-stats">
+              <div class="inf-stat"><div class="sv" style="color:${col}">${NUM(+(r.referrals||0))}</div><div class="sl">Referred</div></div>
+              <div class="inf-stat"><div class="sv">${NUM(+(r.pro_conversions||0))}</div><div class="sl">On Pro</div></div>
+              <div class="inf-stat"><div class="sv" style="${+(r.pro_conversions||0)>0?'color:var(--paid)':''}">${conv}</div><div class="sl">Conv.</div></div>
+              <div class="inf-stat"><div class="sv">${+(r.revenue_inr||0)>0?`₹${NUM(+(r.revenue_inr||0))}`:'—'}</div><div class="sl">Revenue</div></div>
+            </div>
+            <span class="inf-chev">▼</span>
+          </div>
+          <div class="inf-progbar"><div class="inf-progfill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="inf-expand"></div>
+        </div>`;
+      }).join('');
+      refListEl.querySelectorAll('.inf-row').forEach((row,i)=>{
+        const r=referrers[i];
+        row.querySelector('.inf-row-main').addEventListener('click',async()=>{
+          const expand=row.querySelector('.inf-expand');
+          row.classList.toggle('open');
+          if(!row.classList.contains('open')||expand.dataset.loaded)return;
+          const rid=r.referrer_id;
+          if(!rid){expand.innerHTML='<div class="loadingcard" style="padding:8px 0">No DB record found.</div>';expand.dataset.loaded='1';return;}
+          expand.innerHTML='<div class="loadingcard" style="padding:8px 0">Loading referred users…</div>';
+          try{
+            const refs=await q(`SELECT u.name, u.email, coalesce(nullIf(u.plan_cache,''),'free') AS plan, toString(toDate(u.created_at)) AS joined, round(coalesce(sum(CASE WHEN pay.status='completed' AND pay.currency='INR' THEN pay.amount ELSE 0 END),0)) AS paid_inr FROM postgres.users u LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' WHERE u.referred_by_id='${rid}' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' GROUP BY u.id, u.name, u.email, u.plan_cache, u.created_at ORDER BY paid_inr DESC, u.created_at DESC LIMIT 100`);
+            expand.dataset.loaded='1';
+            if(!refs.length){expand.innerHTML='<div class="loadingcard" style="padding:8px 0">No referred users yet.</div>';return;}
+            const withStatus=refs.map(u=>{const isPaid=u.plan&&u.plan!=='free';return{...u,status:isPaid?'active':(+(u.paid_inr||0)>0?'expired':'nosub')};});
+            const activeCt=withStatus.filter(u=>u.status==='active').length;
+            const expiredCt=withStatus.filter(u=>u.status==='expired').length;
+            const freeCt=withStatus.filter(u=>u.status==='nosub').length;
+            withStatus.sort((a,b)=>({active:0,expired:1,nosub:2}[a.status]-{active:0,expired:1,nosub:2}[b.status]));
+            const dot={active:`<span style="color:var(--paid);font-weight:600;font-size:11px">● Active</span>`,expired:`<span style="color:var(--warn);font-weight:600;font-size:11px">● Expired</span>`,nosub:`<span style="color:var(--muted);font-size:11px">● Free</span>`};
+            expand.innerHTML=`<div style="display:flex;align-items:center;gap:14px;font-size:12px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="font-weight:700">${withStatus.length} referred</span>
+              <span style="color:var(--paid)">● ${activeCt} Active</span>
+              <span style="color:var(--warn)">● ${expiredCt} Expired</span>
+              <span style="color:var(--muted)">● ${freeCt} Free</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr style="color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line)">
+                <th style="text-align:left;padding:4px 8px 4px 0">Referred User</th>
+                <th style="text-align:left;padding:4px 8px">Plan</th>
+                <th style="text-align:left;padding:4px 8px">Status</th>
+                <th style="text-align:right;padding:4px 8px">Paid</th>
+                <th style="text-align:right;padding:4px 0 4px 8px">Joined</th>
+              </tr></thead>
+              <tbody>${withStatus.map(u=>{const uc=avatarColor(u.email||'');return`<tr style="border-bottom:1px solid var(--chip)">
+                <td style="padding:6px 8px 6px 0"><div style="display:flex;align-items:center;gap:7px">
+                  <div style="width:24px;height:24px;border-radius:50%;background:${uc};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;flex:0 0 24px">${initials(u.name||'')}</div>
+                  <div><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${h(u.name||'—')}</div>
+                  <div style="color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${h(u.email||'')}</div></div>
+                </div></td>
+                <td style="padding:6px 8px;color:${u.status==='active'?'var(--sig)':'var(--muted)'};font-weight:${u.status==='active'?'600':'400'}">${u.plan==='free'?'Free':h(u.plan||'—')}</td>
+                <td style="padding:6px 8px">${dot[u.status]||''}</td>
+                <td style="padding:6px 8px;text-align:right;font-weight:${+(u.paid_inr||0)>0?'700':'400'};color:${+(u.paid_inr||0)>0?'var(--paid)':'var(--muted)'}">${+(u.paid_inr||0)>0?`₹${NUM(+(u.paid_inr||0))}`:'—'}</td>
+                <td style="padding:6px 0 6px 8px;text-align:right;color:var(--muted);font-size:11px">${u.joined||'—'}</td>
+              </tr>`;}).join('')}</tbody>
+            </table>`;
+          }catch(e){expand.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
+        });
+      });
+    }catch(e){if(refListEl)refListEl.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
+  }
+
+  /* ---- Referral engagement funnel (PostHog events, cumulative strict) ---- */
   await funnelInto('ref-funnel',[
     {label:'Code field opened',   cond:"event='referral_code_field_open'",   color:'var(--vis)',  tip:'User opened the referral code input (referral_code_field_open).'},
     {label:'Apply attempted',     cond:"event='referral_code_apply_attempt'",color:'var(--sig)',  tip:'User submitted a referral code (referral_code_apply_attempt).'},
-    {label:'Discount applied',    cond:"event='referral_discount_applied'",  color:'var(--act)',  tip:'Code was valid and discount applied (referral_discount_applied).'},
+    {label:'Discount applied',    cond:"event='referral_discount_applied'",  color:'var(--act)',  tip:'Code was valid and discount applied. Cumulative: only users who also opened the field and attempted apply (referral_discount_applied).'},
     {label:'Referral purchase',   cond:"event='referral_purchase'",          color:'var(--paid)', tip:'Completed a purchase with referral (referral_purchase).'},
     {label:'Reward granted',      cond:"event='referral_reward_granted'",    color:'var(--mrr)',  tip:'Referrer received their reward (referral_reward_granted).'},
-  ]);
+  ],[],{cumulative:true});
 }
 
 /* ===== INFLUENCERS ===== */
-let INF_DATA=[],infSort={col:'referrals',dir:-1};
+let INF_DATA=[], INF_INF_MAP={};
+const infState={perf:'all',code:'all',platform:'all',sort:'referrals_desc',search:'',infOnly:true};
+
+function avatarColor(s){
+  const cols=['#3b5bdb','#0ea5e9','#16a34a','#d97706','#a855f7','#e1306c','#0f766e','#dc2626','#2563eb','#7c3aed'];
+  let hv=0;for(const c of (s||''))hv=(hv*31+c.charCodeAt(0))>>>0;
+  return cols[hv%cols.length];
+}
+function initials(name){
+  if(!name||!name.trim())return '?';
+  const p=name.trim().split(/\s+/);
+  return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();
+}
 
 async function loadInfluencers(){
   document.getElementById('inf-kpis').innerHTML='<div class="loadingcard">Loading…</div>';
-  const tb=document.querySelector('#inf-table tbody'),th=document.querySelector('#inf-table thead');
-  if(tb)tb.innerHTML='<tr><td class="loadingcard" colspan="7">Loading…</td></tr>';
+  document.getElementById('inf-list').innerHTML='<div class="loadingcard" style="padding:10px 0">Loading influencers…</div>';
   try{
-    INF_DATA=await q(`
-      SELECT r.name AS name, r.email AS email, coalesce(r.referral_code,'') AS code,
-        count(u.id) AS referrals,
-        countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS pro_conversions,
-        round(coalesce(sum(pay.amount),0)) AS revenue_inr,
-        toString(max(toDate(u.created_at))) AS last_referral
-      FROM postgres.users r
-      INNER JOIN postgres.users u ON u.referred_by_id=r.id
-      LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' AND pay.created_at>='2026-05-01'
-      WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%'
-        AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in'
-      GROUP BY r.name, r.email, r.referral_code
-      HAVING referrals>0
-      ORDER BY referrals DESC LIMIT 200`);
+    const res=await qBatch([
+      {id:'pg',query:`SELECT r.id AS referrer_id, r.name AS name, r.email AS email, coalesce(r.referral_code,'') AS code, count(u.id) AS referrals, countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS pro_conversions, round(coalesce(sum(pay.amount),0)) AS revenue_inr, toString(max(toDate(u.created_at))) AS last_referral FROM postgres.users r INNER JOIN postgres.users u ON u.referred_by_id=r.id LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' AND pay.created_at>='2026-05-01' WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' AND lower(r.email) NOT LIKE '%test%' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' GROUP BY r.id, r.name, r.email, r.referral_code HAVING referrals>0 ORDER BY referrals DESC LIMIT 200`},
+      {id:'ph',query:`SELECT any(person.properties.email) AS email, any(person.properties.social_media_platform) AS platform, any(person.properties.$name) AS ph_name, any(person.properties.influencer_go_live_date) AS go_live_date FROM events WHERE person.properties.is_influencer=true AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') GROUP BY person_id LIMIT 100`}
+    ]);
+    const pg=batchGet(res,'pg');
+    const ph=batchGet(res,'ph');
+    INF_INF_MAP={};
+    for(const row of ph) if(row.email) INF_INF_MAP[row.email.toLowerCase()]={platform:row.platform||'',ph_name:row.ph_name||'',go_live_date:row.go_live_date||''};
+    INF_DATA=pg.map(r=>{const inf=INF_INF_MAP[(r.email||'').toLowerCase()]||{};return{...r,is_influencer:!!inf.platform||!!inf.go_live_date||!!(INF_INF_MAP[(r.email||'').toLowerCase()]),platform:inf.platform||'',go_live_date:inf.go_live_date||''};});
+    const pgEmails=new Set(pg.map(r=>(r.email||'').toLowerCase()));
+    for(const row of ph){
+      if(row.email&&!pgEmails.has(row.email.toLowerCase())){
+        INF_DATA.push({referrer_id:null,name:row.ph_name||row.email.split('@')[0],email:row.email,code:'',referrals:0,pro_conversions:0,revenue_inr:0,last_referral:'',is_influencer:true,platform:row.platform||'',go_live_date:row.go_live_date||''});
+      }
+    }
     renderInfluencers();
-    document.getElementById('inf-export').onclick=exportInfluencersCSV;
-    document.getElementById('inf-perf').onchange=renderInfluencers;
-    document.getElementById('inf-code-f').onchange=renderInfluencers;
+    bindInfluencerControls();
   }catch(e){
     document.getElementById('inf-kpis').innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;
-    if(tb)tb.innerHTML=`<tr><td class="cardErr" colspan="7">⚠ ${e.message}</td></tr>`;
+    document.getElementById('inf-list').innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;
   }
 }
 
-function renderInfluencers(){
-  const perf=document.getElementById('inf-perf').value;
-  const codeF=document.getElementById('inf-code-f').value;
-  let rows=[...INF_DATA].filter(r=>{
-    if(perf==='converted'&&+r.pro_conversions===0)return false;
-    if(perf==='10plus'&&+r.referrals<10)return false;
-    if(codeF==='has_code'&&!r.code)return false;
+function bindInfluencerControls(){
+  document.getElementById('inf-refresh').onclick=loadInfluencers;
+  document.getElementById('inf-search').oninput=e=>{infState.search=e.target.value;renderInfluencers();};
+  // Influencers only / All referrers toggle
+  const setInfOnly=(val)=>{
+    infState.infOnly=val;
+    const btnOn=document.getElementById('inf-inf-only'),btnOff=document.getElementById('inf-all-ref');
+    btnOn.classList.toggle('active',val);btnOff.classList.toggle('active',!val);
+    btnOn.style.cssText=val?'background:var(--brand);color:#fff;border-color:var(--brand)':'';
+    btnOff.style.cssText=!val?'background:var(--brand);color:#fff;border-color:var(--brand)':'';
+    renderInfluencers();
+  };
+  document.getElementById('inf-inf-only').onclick=()=>setInfOnly(true);
+  document.getElementById('inf-all-ref').onclick=()=>setInfOnly(false);
+  document.getElementById('inf-sort').onchange=e=>{infState.sort=e.target.value;renderInfluencers();};
+  document.getElementById('inf-export').onclick=exportInfluencersCSV;
+  document.querySelectorAll('.inf-pill').forEach(btn=>{
+    btn.onclick=()=>{
+      const f=btn.dataset.filter,v=btn.dataset.val;
+      if(!f)return;
+      document.querySelectorAll(`.inf-pill[data-filter="${f}"]`).forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      infState[f]=v;
+      renderInfluencers();
+    };
+  });
+  // Platform tabs
+  document.querySelectorAll('.inf-tab').forEach(tab=>{
+    tab.onclick=()=>{
+      document.querySelectorAll('.inf-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      infState.platform=tab.dataset.platform;
+      renderInfluencers();
+    };
+  });
+  // "Add Influencer" modal
+  const modal=document.getElementById('inf-modal');
+  const openModal=(email='')=>{
+    document.getElementById('inf-add-email').value=email;
+    document.getElementById('inf-add-platform').value='';
+    document.getElementById('inf-add-live-date').value='';
+    document.getElementById('inf-modal-result').innerHTML='';
+    modal.classList.add('show');
+    document.getElementById('inf-add-email').focus();
+  };
+  document.getElementById('inf-add').onclick=()=>openModal();
+  const closeModal=()=>modal.classList.remove('show');
+  document.getElementById('inf-modal-close').onclick=closeModal;
+  document.getElementById('inf-modal-cancel').onclick=closeModal;
+  modal.onclick=e=>{if(e.target===modal)closeModal();};
+  document.getElementById('inf-modal-submit').onclick=async()=>{
+    const email=document.getElementById('inf-add-email').value.trim();
+    const platform=document.getElementById('inf-add-platform').value;
+    const goLiveDate=document.getElementById('inf-add-live-date').value;
+    const res=document.getElementById('inf-modal-result');
+    const btn=document.getElementById('inf-modal-submit');
+    if(!email){res.innerHTML='<span style="color:var(--bad)">Email is required.</span>';return;}
+    res.innerHTML='<span style="color:var(--muted)">Looking up person…</span>';
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      const r=await fetch('/api/posthog-person',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,platform,go_live_date:goLiveDate})});
+      const j=await r.json();
+      if(j.success){
+        const parts=[`platform=${platform||'none'}`,goLiveDate?`live=${goLiveDate}`:''].filter(Boolean).join(', ');
+        res.innerHTML=`<span style="color:var(--paid)">✓ Updated: is_influencer=true${parts?`, ${parts}`:''} — refreshing…</span>`;
+        setTimeout(()=>{closeModal();loadInfluencers();},1800);
+      }else{
+        res.innerHTML=`<span style="color:var(--bad)">⚠ ${j.error||'Failed'}</span>`;
+      }
+    }catch(e){
+      res.innerHTML=`<span style="color:var(--bad)">⚠ ${e.message}</span>`;
+    }finally{
+      btn.disabled=false;btn.textContent='Set as Influencer';
+    }
+  };
+}
+
+function filteredInfluencers(){
+  const sq=infState.search.toLowerCase().trim();
+  return INF_DATA.filter(r=>{
+    if(infState.infOnly&&!r.is_influencer)return false;
+    if(infState.perf==='converted'&&+r.pro_conversions===0)return false;
+    if(infState.perf==='10plus'&&+r.referrals<10)return false;
+    if(infState.code==='has_code'&&!r.code)return false;
+    if(infState.platform!=='all'&&(r.platform||'').toLowerCase()!==infState.platform)return false;
+    if(sq&&!((r.name||'').toLowerCase().includes(sq)||(r.email||'').toLowerCase().includes(sq)||(r.code||'').toLowerCase().includes(sq)))return false;
     return true;
   });
-  rows.sort((a,b)=>{const v=infSort.col;return(+a[v]<+b[v]?1:-1)*infSort.dir;});
+}
+
+function renderInfluencers(){
+  let rows=filteredInfluencers();
+  let sortCol='referrals',sortDir=-1;
+  if(infState.sort==='pro_conversions_desc'){sortCol='pro_conversions';}
+  else if(infState.sort==='revenue_inr_desc'){sortCol='revenue_inr';}
+  else if(infState.sort==='last_referral_desc'){sortCol='last_referral';}
+  else if(infState.sort==='last_referral_asc'){sortCol='last_referral';sortDir=1;}
+  else if(infState.sort==='referrals_asc'){sortDir=1;}
+  rows=[...rows].sort((a,b)=>{
+    const av=sortCol==='last_referral'?(a[sortCol]||''):(+a[sortCol]||0);
+    const bv=sortCol==='last_referral'?(b[sortCol]||''):(+b[sortCol]||0);
+    return av<bv?-sortDir:av>bv?sortDir:0;
+  });
 
   const totalRefs=rows.reduce((s,r)=>s+(+r.referrals||0),0);
   const totalConv=rows.reduce((s,r)=>s+(+r.pro_conversions||0),0);
   const converting=rows.filter(r=>+r.pro_conversions>0).length;
   const totalRev=rows.reduce((s,r)=>s+(+r.revenue_inr||0),0);
-  document.getElementById('inf-sub').textContent=`${rows.length} influencers`;
+  const infCount=INF_DATA.filter(r=>r.is_influencer).length;
   document.getElementById('inf-kpis').innerHTML=[
+    ['Influencers',NUM(infCount),'is_influencer=true','--brand'],
     ['Total Referrals',NUM(totalRefs),'referred signups','--sig'],
     ['Pro Conversions',NUM(totalConv),'referred → paid','--paid'],
-    ['Conv %',totalRefs>0?(totalConv/totalRefs*100).toFixed(1)+'%':'0%','referrals → paid','--act'],
-    ['Converting',NUM(converting),'w/ ≥1 pro conv','--brand'],
+    ['Avg Conv %',totalRefs>0?(totalConv/totalRefs*100).toFixed(1)+'%':'0%','referrals → paid','--act'],
+    ['Converting',NUM(converting),'w/ ≥1 pro conv','--warn'],
     ['Revenue (INR)',`₹${NUM(totalRev)}`,'from referred users','--mrr'],
   ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:${String(v).length>8?'16px':'20px'}">${v}</div><div class="c">${c}</div></div>`).join('');
 
-  const th=document.querySelector('#inf-table thead');
-  const tb=document.querySelector('#inf-table tbody');
-  const s=(col,lbl)=>`<th style="cursor:pointer" data-sc="${col}">${lbl} ${infSort.col===col?(infSort.dir<0?'▼':'▲'):'↕'}</th>`;
-  if(th)th.innerHTML=`<tr><th>Influencer</th><th>Code</th>${s('referrals','Referrals')}${s('pro_conversions','Pro Conv')}${s('revenue_inr','Revenue')}${s('last_referral','Last Referral')}</tr>`;
+  // Update platform tab counts (respect infOnly toggle)
+  const tabBase=infState.infOnly?INF_DATA.filter(r=>r.is_influencer):INF_DATA;
+  const allCt=tabBase.length;
+  const igCt=tabBase.filter(r=>(r.platform||'').toLowerCase()==='instagram').length;
+  const twCt=tabBase.filter(r=>(r.platform||'').toLowerCase()==='twitter').length;
+  const payHist=infPayHistory();
+  const payCt=Object.keys(payHist).filter(rid=>payHist[rid]&&payHist[rid].length>0).length;
+  const tAll=document.getElementById('tab-all-ct'),tIg=document.getElementById('tab-ig-ct'),tTw=document.getElementById('tab-tw-ct'),tPay=document.getElementById('tab-pay-ct');
+  if(tAll)tAll.textContent=allCt;if(tIg)tIg.textContent=igCt;if(tTw)tTw.textContent=twCt;if(tPay)tPay.textContent=payCt;
+  // Sync active tab to infState.platform
+  document.querySelectorAll('.inf-tab').forEach(t=>{t.classList.toggle('active',t.dataset.platform===infState.platform);});
+
+  // Payments tab — dedicated view
+  if(infState.platform==='payments'){
+    renderPaymentsTab();
+    return;
+  }
+
+  document.getElementById('inf-sub').innerHTML=`${rows.length} influencer${rows.length!==1?'s':''} · click any to see who they referred`;
+
   const mx=Math.max(...rows.map(r=>+r.referrals||0),1);
-  if(tb)tb.innerHTML=rows.map(r=>`<tr>
-    <td class="barcell"><div class="mini" style="width:${100*(+r.referrals||0)/mx}%"></div><span><b>${h(r.name||'—')}</b><br><span style="color:var(--muted);font-size:10.5px">${h(r.email||'')}</span></span></td>
-    <td>${r.code?`<code style="background:var(--chip);padding:2px 7px;border-radius:5px;font-size:11px">${h(r.code)}</code>`:'<span style="color:var(--muted)">—</span>'}</td>
-    <td><b>${NUM(r.referrals)}</b></td>
-    <td>${+r.pro_conversions>0?`<b style="color:var(--paid)">${NUM(r.pro_conversions)}</b>`:NUM(r.pro_conversions)}</td>
-    <td>${+r.revenue_inr>0?`<b>₹${NUM(r.revenue_inr)}</b>`:'—'}</td>
-    <td style="color:var(--muted);font-size:11px">${r.last_referral||'—'}</td>
-  </tr>`).join('')||`<tr><td class="loadingcard" colspan="6">No influencers match.</td></tr>`;
-  document.querySelectorAll('#inf-table thead th[data-sc]').forEach(t=>t.onclick=()=>{
-    const c=t.dataset.sc;infSort={col:c,dir:infSort.col===c?-infSort.dir:-1};renderInfluencers();
+  const list=document.getElementById('inf-list');
+  if(!rows.length){list.innerHTML='<div class="loadingcard">No influencers match the filters.</div>';return;}
+  list.innerHTML=rows.map((r,i)=>{
+    const col=avatarColor(r.email||r.name||'');
+    const conv=+r.referrals>0?(+r.pro_conversions/+r.referrals*100).toFixed(0)+'%':'0%';
+    const pct=100*(+r.referrals||0)/mx;
+    const codeBadge=r.code?`<span class="inf-codebd" style="background:${col}22;color:${col}">${h(r.code)}</span>`:'';
+    const plat=(r.platform||'').toLowerCase();
+    const igBadge=plat==='instagram'?`<span class="inf-ig-badge">📸 Instagram</span>`:plat==='twitter'?`<span class="inf-ig-badge" style="background:#e7f3ff;color:#1d9bf0">🐦 Twitter</span>`:'';
+    const starBadge=r.is_influencer&&!plat?`<span style="background:#eff6ff;color:var(--brand);border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">★ Influencer</span>`:'';
+    const liveDate=r.go_live_date?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">🎬 Live ${r.go_live_date}</span>`:'';
+    return `<div class="inf-row" data-rid="${r.referrer_id||''}" data-idx="${i}">
+      <div class="inf-row-main">
+        <span class="inf-rank">${i+1}</span>
+        <div class="inf-avatar" style="background:${col}">${initials(r.name||'')}</div>
+        <div class="inf-nameblk">
+          <div class="inf-nameline">${h(r.name||'—')}${codeBadge}${igBadge}${starBadge}${liveDate}</div>
+          <div class="inf-emailline">${h(r.email||'')}</div>
+        </div>
+        <div class="inf-stats">
+          <div class="inf-stat"><div class="sv" style="color:${col}">${NUM(r.referrals)}</div><div class="sl">Referrals</div></div>
+          <div class="inf-stat"><div class="sv">${NUM(r.pro_conversions)}</div><div class="sl">On Pro</div></div>
+          <div class="inf-stat"><div class="sv" style="${+r.pro_conversions>0?'color:var(--paid)':''}">${conv}</div><div class="sl">Conv.</div></div>
+          <div class="inf-stat"><div class="sv">${+r.revenue_inr>0?`₹${NUM(r.revenue_inr)}`:'—'}</div><div class="sl">Revenue</div></div>
+        </div>
+        <span class="inf-chev">▼</span>
+      </div>
+      <div class="inf-progbar"><div class="inf-progfill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="inf-expand"></div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.inf-row').forEach((row,i)=>{
+    const r=rows[i];
+    row.querySelector('.inf-row-main').onclick=async()=>{
+      const expand=row.querySelector('.inf-expand');
+      row.classList.toggle('open');
+      if(!row.classList.contains('open')||expand.dataset.loaded)return;
+      const rid=row.dataset.rid;
+      if(!rid){expand.innerHTML='<div class="loadingcard" style="padding:8px 0">No postgres record found for this influencer.</div>';expand.dataset.loaded='1';return;}
+      expand.innerHTML='<div class="loadingcard" style="padding:8px 0">Loading referred users…</div>';
+      try{
+        const refs=await q(`SELECT u.name, u.email, coalesce(nullIf(u.plan_cache,''),'free') AS plan, toString(toDate(u.created_at)) AS joined, round(coalesce(sum(pay.amount),0)) AS paid_inr FROM postgres.users u LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' AND pay.created_at>='2026-05-01' WHERE u.referred_by_id='${rid}' AND u.email NOT LIKE '%@nextraise.ai' GROUP BY u.id, u.name, u.email, u.plan_cache, u.created_at ORDER BY paid_inr DESC, u.created_at DESC LIMIT 100`);
+        expand.dataset.loaded='1';
+        if(!refs.length){expand.innerHTML='<div class="loadingcard" style="padding:8px 0">No referred users yet.</div>';return;}
+        // Derive status from plan_cache + paid amount
+        const withStatus=refs.map(u=>{
+          const isPaid=u.plan&&u.plan!=='free';
+          const status=isPaid?'active':(+u.paid_inr>0?'expired':'nosub');
+          return {...u,status};
+        });
+        const activeCount=withStatus.filter(u=>u.status==='active').length;
+        const expiredCount=withStatus.filter(u=>u.status==='expired').length;
+        const freeCount=withStatus.filter(u=>u.status==='nosub').length;
+        // Sort: active first, then expired, then nosub
+        withStatus.sort((a,b)=>{const o={active:0,expired:1,nosub:2};return o[a.status]-o[b.status];});
+        const statusDot={active:`<span style="color:var(--paid);font-weight:600;font-size:11px">● Active</span>`,expired:`<span style="color:var(--warn);font-weight:600;font-size:11px">● Expired</span>`,nosub:`<span style="color:var(--muted);font-size:11px">● No sub</span>`};
+        const rev=+r.revenue_inr||0;
+        const conv=+r.pro_conversions||0;
+        const paySaved=infPaySettings()[rid]||{type:'commission',rate:10};
+        const socialSaved=infSocial()[rid]||{views:'',likes:'',shares:'',saves:'',comments:''};
+        const pt=paySaved.type;const pr=paySaved.rate;
+        const payout=calcInfPay(pt,pr,rev,conv);
+        const typeLabel={commission:`${pr}% of ₹${NUM(rev)} revenue (incl. renewals)`,performance:`₹${NUM(pr)} × ${NUM(conv)} conversions`,fixed:`One-time settlement`};
+        expand.innerHTML=
+          `<div class="pay-calc" id="pc-${rid}">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap">Payment Type</span>
+              <select id="pt-${rid}" style="padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);cursor:pointer">
+                <option value="commission"${pt==='commission'?' selected':''}>% Commission (% of revenue)</option>
+                <option value="performance"${pt==='performance'?' selected':''}>Performance Bonus (per conversion)</option>
+                <option value="fixed"${pt==='fixed'?' selected':''}>Fixed Settlement (one-time amount)</option>
+              </select>
+            </div>
+            <div id="pay-sub-${rid}" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
+              <div style="display:flex;align-items:center;gap:6px" id="pay-inp-wrap-${rid}">
+                ${pt==='commission'
+                  ?`<input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" max="100" step="0.5" value="${pr}" placeholder="10"><span style="font-size:11px;color:var(--muted)">% of ₹${NUM(rev)} revenue (incl. renewals)</span>`
+                  :pt==='performance'
+                  ?`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="1" value="${pr}" placeholder="100"><span style="font-size:11px;color:var(--muted)">per Pro conversion · ${NUM(conv)} total conversions</span>`
+                  :`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="100" value="${pr}" placeholder="5000"><span style="font-size:11px;color:var(--muted)">one-time fixed settlement</span>`}
+              </div>
+              <div class="pay-out-box">
+                <span style="font-size:11px;color:var(--muted)">Payout:</span>
+                <span class="pay-out-amt" id="po-${rid}">₹${NUM(payout)}</span>
+              </div>
+              <button class="social-save-btn" id="pay-save-${rid}" style="margin-left:4px">Save</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap">Discount Code</span>
+              <input id="dc-${rid}" type="text" placeholder="e.g. INFL_PRIYA20" value="${(infPaySettings()[rid]||{}).code||''}" style="padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);width:160px">
+              <span style="font-size:11px;color:var(--muted)">Users paying with this code get attributed to this influencer</span>
+            </div>
+          </div>
+          <div style="background:var(--chip);border-radius:9px;padding:10px 13px;margin-bottom:12px" id="ph-wrap-${rid}">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Payment Status</span>
+              <span id="ph-status-${rid}" style="font-size:12px;font-weight:700;color:${infPayHistory()[rid]?.length?'var(--paid)':'var(--warn)'}">
+                ${infPayHistory()[rid]?.length?`✓ Paid · ₹${NUM(infPayHistory()[rid].reduce((s,p)=>s+(+p.amount||0),0))} total`:'⚠ Unpaid'}
+              </span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <span style="font-size:11px;color:var(--muted)">₹</span>
+              <input id="ph-amt-${rid}" type="number" min="0" placeholder="Amount paid" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;background:var(--panel);color:var(--fg);width:120px">
+              <input id="ph-note-${rid}" type="text" placeholder="Note (e.g. Jul 2026 commission)" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--panel);color:var(--fg);flex:1;min-width:140px">
+              <button id="ph-add-${rid}" class="social-save-btn">+ Record Payment</button>
+            </div>
+            ${(infPayHistory()[rid]||[]).length?`<div style="border-top:1px solid var(--line);padding-top:8px"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="color:var(--muted);font-size:10px;font-weight:700"><th style="text-align:left;padding:2px 8px 2px 0">Date</th><th style="text-align:right;padding:2px 8px">Amount</th><th style="text-align:left;padding:2px 0 2px 8px">Note</th></tr></thead><tbody>${(infPayHistory()[rid]||[]).map(p=>`<tr style="border-top:1px solid var(--chip)"><td style="padding:4px 8px 4px 0;color:var(--muted)">${p.date}</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--paid)">₹${NUM(+p.amount||0)}</td><td style="padding:4px 0 4px 8px;color:var(--fg)">${h(p.note||'—')}</td></tr>`).join('')}</tbody></table></div>`:''}
+          </div>
+          <div style="background:var(--chip);border-radius:9px;padding:10px 13px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Social Metrics</span>
+              <button class="social-save-btn" id="ss-${rid}">Save</button>
+            </div>
+            <div class="social-row">
+              ${['views','likes','shares','saves','comments'].map(f=>`<div class="social-inp-wrap"><span class="social-inp-lbl">${f}</span><input class="social-inp" id="si-${rid}-${f}" type="number" min="0" placeholder="0" value="${socialSaved[f]||''}"></div>`).join('')}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;font-size:12px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="font-weight:700">${withStatus.length} referred</span>
+            <span style="color:var(--paid)">● ${activeCount} Active</span>
+            <span style="color:var(--warn)">● ${expiredCount} Expired</span>
+            <span style="color:var(--muted)">● ${freeCount} Free</span>
+            <span style="color:var(--muted);font-style:italic;font-size:11px">Revenue includes all renewals, even without code</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line)">
+              <th style="text-align:left;padding:4px 8px 4px 0">Referred User</th>
+              <th style="text-align:left;padding:4px 8px">Plan</th>
+              <th style="text-align:left;padding:4px 8px">Status</th>
+              <th style="text-align:right;padding:4px 8px">Total Paid</th>
+              <th style="text-align:right;padding:4px 0 4px 8px">Joined</th>
+            </tr></thead>
+            <tbody>${withStatus.map(u=>{
+              const uc=avatarColor(u.email||'');
+              const planLabel=u.plan==='free'?'Free':u.plan;
+              return `<tr style="border-bottom:1px solid var(--chip)">
+                <td style="padding:6px 8px 6px 0">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <div style="width:24px;height:24px;border-radius:50%;background:${uc};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;flex:0 0 24px">${initials(u.name||'')}</div>
+                    <div style="min-width:0">
+                      <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${h(u.name||'—')}</div>
+                      <div style="color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${h(u.email||'')}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding:6px 8px;color:${u.status==='active'?'var(--sig)':'var(--muted)'};font-weight:${u.status==='active'?'600':'400'}">${planLabel}</td>
+                <td style="padding:6px 8px">${statusDot[u.status]||''}</td>
+                <td style="padding:6px 8px;text-align:right;font-weight:${+u.paid_inr>0?'700':'400'};color:${+u.paid_inr>0?'var(--paid)':'var(--muted)'}">${+u.paid_inr>0?`₹${NUM(u.paid_inr)}`:'—'}</td>
+                <td style="padding:6px 0 6px 8px;text-align:right;color:var(--muted);font-size:11px">${u.joined||'—'}</td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>`;
+        // Wire up payment calculator interactions
+        (()=>{
+          let curPt=pt, curRate=pr;
+          const rebuildInputs=(newPt)=>{
+            const wrap=document.getElementById(`pay-inp-wrap-${rid}`);
+            if(!wrap)return;
+            if(newPt==='commission'){
+              wrap.innerHTML=`<input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" max="100" step="0.5" value="${curRate||10}" placeholder="10"><span style="font-size:11px;color:var(--muted)">% of ₹${NUM(rev)} revenue (incl. renewals)</span>`;
+            } else if(newPt==='performance'){
+              wrap.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="1" value="${curRate||100}" placeholder="100"><span style="font-size:11px;color:var(--muted)">per Pro conversion · ${NUM(conv)} total conversions</span>`;
+            } else {
+              wrap.innerHTML=`<span style="font-size:12px;font-weight:700;color:var(--muted)">₹</span><input class="pay-rate-inp" id="pr-${rid}" type="number" min="0" step="100" value="${curRate||0}" placeholder="5000"><span style="font-size:11px;color:var(--muted)">one-time fixed settlement</span>`;
+            }
+            document.getElementById(`pr-${rid}`)?.addEventListener('input',e=>{
+              curRate=+e.target.value||0;
+              const po=document.getElementById(`po-${rid}`);
+              if(po)po.textContent='₹'+NUM(calcInfPay(curPt,curRate,rev,conv));
+              saveInfPay(rid,{type:curPt,rate:curRate});
+            });
+          };
+          const sel=document.getElementById(`pt-${rid}`);
+          if(sel){
+            sel.onchange=()=>{
+              curPt=sel.value;
+              curRate=infPaySettings()[rid]?.rate||0;
+              rebuildInputs(curPt);
+              const po=document.getElementById(`po-${rid}`);
+              if(po)po.textContent='₹'+NUM(calcInfPay(curPt,curRate,rev,conv));
+              saveInfPay(rid,{type:curPt,rate:curRate});
+            };
+          }
+          // Bind initial input
+          document.getElementById(`pr-${rid}`)?.addEventListener('input',e=>{
+            curRate=+e.target.value||0;
+            const po=document.getElementById(`po-${rid}`);
+            if(po)po.textContent='₹'+NUM(calcInfPay(curPt,curRate,rev,conv));
+          });
+          // Save button
+          document.getElementById(`pay-save-${rid}`)?.addEventListener('click',()=>{
+            curRate=+document.getElementById(`pr-${rid}`)?.value||0;
+            const code=(document.getElementById(`dc-${rid}`)?.value||'').trim();
+            saveInfPay(rid,{type:curPt,rate:curRate,code});
+            const btn=document.getElementById(`pay-save-${rid}`);
+            if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='Save';btn.style.background='';},1500);}
+          });
+        })();
+        // Wire up Record Payment button
+        document.getElementById(`ph-add-${rid}`)?.addEventListener('click',()=>{
+          const amt=+document.getElementById(`ph-amt-${rid}`)?.value||0;
+          const note=(document.getElementById(`ph-note-${rid}`)?.value||'').trim();
+          if(!amt){alert('Enter an amount first.');return;}
+          addInfPayment(rid,amt,note);
+          // Rebuild payment history section
+          const wrap=document.getElementById(`ph-wrap-${rid}`);
+          if(wrap){
+            const hist=infPayHistory()[rid]||[];
+            const total=hist.reduce((s,p)=>s+(+p.amount||0),0);
+            const statusEl=document.getElementById(`ph-status-${rid}`);
+            if(statusEl){statusEl.style.color='var(--paid)';statusEl.textContent=`✓ Paid · ₹${NUM(total)} total`;}
+            // Append new row to history table or rebuild
+            const tbody=wrap.querySelector('tbody');
+            const newRow=`<tr style="border-top:1px solid var(--chip)"><td style="padding:4px 8px 4px 0;color:var(--muted)">${hist[0].date}</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--paid)">₹${NUM(amt)}</td><td style="padding:4px 0 4px 8px;color:var(--fg)">${h(note||'—')}</td></tr>`;
+            if(tbody){tbody.insertAdjacentHTML('afterbegin',newRow);}
+            else{wrap.insertAdjacentHTML('beforeend',`<div style="border-top:1px solid var(--line);padding-top:8px"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="color:var(--muted);font-size:10px;font-weight:700"><th style="text-align:left;padding:2px 8px 2px 0">Date</th><th style="text-align:right;padding:2px 8px">Amount</th><th style="text-align:left;padding:2px 0 2px 8px">Note</th></tr></thead><tbody>${newRow}</tbody></table></div>`);}
+            // Clear inputs
+            const a=document.getElementById(`ph-amt-${rid}`),n=document.getElementById(`ph-note-${rid}`);
+            if(a)a.value='';if(n)n.value='';
+            const btn=document.getElementById(`ph-add-${rid}`);
+            if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='+ Record Payment';btn.style.background='';},1500);}
+          }
+        });
+        // Wire up social save button
+        document.getElementById(`ss-${rid}`)?.addEventListener('click',()=>{
+          const fields=['views','likes','shares','saves','comments'];
+          const obj={};
+          fields.forEach(f=>{obj[f]=document.getElementById(`si-${rid}-${f}`)?.value||'';});
+          saveInfSocial(rid,obj);
+          const btn=document.getElementById(`ss-${rid}`);
+          if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='Save';btn.style.background='';},1500);}
+        });
+      }catch(e){expand.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;}
+    };
   });
 }
 
 function exportInfluencersCSV(){
-  const rows=INF_DATA;
-  const hdr=['Name','Email','Referral Code','Referrals','Pro Conversions','Conv%','Revenue INR','Last Referral'];
+  const rows=filteredInfluencers();
+  const hdr=['Name','Email','Referral Code','Is Influencer','Platform','Referrals','Pro Conversions','Conv%','Revenue INR','Last Referral'];
   const csv=[hdr.join(','),...rows.map(r=>[
     `"${(r.name||'').replace(/"/g,'""')}"`,
     `"${(r.email||'').replace(/"/g,'""')}"`,
     `"${(r.code||'').replace(/"/g,'""')}"`,
+    r.is_influencer?'Yes':'No',
+    r.platform||'',
     r.referrals,r.pro_conversions,
     (+r.referrals>0?(+r.pro_conversions/+r.referrals*100).toFixed(1):0)+'%',
-    r.revenue_inr,r.last_referral
+    r.revenue_inr,r.last_referral||''
   ].join(','))].join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download='nextraise-influencers.csv';a.click();
 }
 
-const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals,influencers:loadInfluencers};
+/* ===== EMAIL PERFORMANCE ===== */
+const emState={view:'num',platform:'all',search:'',sort:'date_desc'};
+let EM_DATA=[];
+
+function emNotes(){try{return JSON.parse(localStorage.getItem('em_notes_v1')||'{}')}catch{return {}}}
+function infPaySettings(){try{return JSON.parse(localStorage.getItem('inf_pay_v1')||'{}')}catch{return {}}}
+function saveInfPay(rid,obj){const d=infPaySettings();d[rid]=obj;localStorage.setItem('inf_pay_v1',JSON.stringify(d));}
+function infSocial(){try{return JSON.parse(localStorage.getItem('inf_social_v1')||'{}')}catch{return {}}}
+function saveInfSocial(rid,obj){const d=infSocial();d[rid]=obj;localStorage.setItem('inf_social_v1',JSON.stringify(d));}
+function infPayHistory(){try{return JSON.parse(localStorage.getItem('inf_pay_hist_v1')||'{}')}catch{return {}}}
+function addInfPayment(rid,amount,note){
+  const d=infPayHistory();
+  if(!d[rid])d[rid]=[];
+  d[rid].unshift({amount,note:note||'',date:new Date().toISOString().slice(0,10)});
+  localStorage.setItem('inf_pay_hist_v1',JSON.stringify(d));
+}
+function calcInfPay(type,rate,rev,conv){
+  if(type==='commission')return Math.round((+rev||0)*(+rate||0)/100);
+  if(type==='performance')return Math.round((+conv||0)*(+rate||0));
+  return +rate||0;
+}
+
+function renderPaymentsTab(){
+  const hist=infPayHistory();
+  const settings=infPaySettings();
+  // Build rows: one per influencer who has payment history
+  const paidRids=Object.keys(hist).filter(rid=>hist[rid]&&hist[rid].length>0);
+  // Map rid → influencer data
+  const ridMap=new Map((INF_DATA||[]).map(r=>[r.referrer_id||'',r]));
+
+  // Also include rids that exist in settings but not in INF_DATA (edge case)
+  const allRids=[...new Set([...paidRids,...Object.keys(settings)])].filter(rid=>rid);
+
+  const payRows=allRids.map(rid=>{
+    const inf=ridMap.get(rid)||{};
+    const payments=hist[rid]||[];
+    const totalPaid=payments.reduce((s,p)=>s+(+p.amount||0),0);
+    const lastDate=payments[0]?.date||'';
+    const payCount=payments.length;
+    const set=settings[rid]||{};
+    return {rid,inf,payments,totalPaid,lastDate,payCount,type:set.type||'',rate:set.rate||'',code:set.code||''};
+  }).filter(r=>r.payCount>0).sort((a,b)=>b.totalPaid-a.totalPaid);
+
+  const grandTotal=payRows.reduce((s,r)=>s+r.totalPaid,0);
+  const totalCount=payRows.reduce((s,r)=>s+r.payCount,0);
+
+  const kpis=document.getElementById('inf-kpis');
+  if(kpis)kpis.innerHTML=[
+    ['Paid Influencers',NUM(payRows.length),'with payment history','--brand'],
+    ['Total Payments',NUM(totalCount),'payment entries','--sig'],
+    ['Total Paid Out',`₹${NUM(grandTotal)}`,'sum of all payments','--paid'],
+    ['Avg per Influencer',payRows.length?`₹${NUM(Math.round(grandTotal/payRows.length))}`:'₹0','avg payout','--act'],
+  ].map(([t,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${t}</div><div class="v" style="font-size:${String(v).length>8?'16px':'20px'}">${v}</div><div class="c">${c}</div></div>`).join('');
+
+  document.getElementById('inf-sub').innerHTML=`${payRows.length} influencer${payRows.length!==1?'s':''} with recorded payments`;
+
+  const list=document.getElementById('inf-list');
+  if(!payRows.length){
+    list.innerHTML='<div class="loadingcard" style="color:var(--muted);text-align:center;padding:32px">No payments recorded yet.<br><span style="font-size:12px">Open any influencer and use + Record Payment to log one.</span></div>';
+    return;
+  }
+
+  list.innerHTML=payRows.map((row,i)=>{
+    const {rid,inf,payments,totalPaid,lastDate,payCount,type,rate,code}=row;
+    const col=avatarColor(inf.email||inf.name||rid||'');
+    const plat=(inf.platform||'').toLowerCase();
+    const igBadge=plat==='instagram'?`<span class="inf-ig-badge">📸 Instagram</span>`:plat==='twitter'?`<span class="inf-ig-badge" style="background:#e7f3ff;color:#1d9bf0">🐦 Twitter</span>`:'';
+    const typeLabel=type==='commission'?`${rate}% commission`:type==='performance'?`₹${rate}/conv`:`Fixed ₹${rate}`;
+    const typeBadge=type?`<span style="background:#f0fdf4;color:#16a34a;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:600">${typeLabel}</span>`:'';
+    const codeBadge=code?`<span class="inf-codebd" style="background:${col}22;color:${col}">${h(code)}</span>`:'';
+    const histRows=payments.map(p=>`<tr>
+      <td style="padding:5px 10px;font-size:12px;color:var(--muted)">${p.date||'—'}</td>
+      <td style="padding:5px 10px;font-size:13px;font-weight:700;color:#16a34a">₹${NUM(+p.amount||0)}</td>
+      <td style="padding:5px 10px;font-size:12px;color:var(--fg)">${h(p.note||'—')}</td>
+    </tr>`).join('');
+    return `<div class="inf-row" style="margin-bottom:8px">
+      <div class="inf-row-main pay-tab-row" data-pid="${i}" style="cursor:pointer">
+        <span class="inf-rank">${i+1}</span>
+        <div class="inf-avatar" style="background:${col}">${initials(inf.name||'')}</div>
+        <div class="inf-nameblk">
+          <div class="inf-nameline">${h(inf.name||rid)}${igBadge}${typeBadge}${codeBadge}</div>
+          <div class="inf-emailline">${h(inf.email||rid)}</div>
+        </div>
+        <div class="inf-stats">
+          <div class="inf-stat"><div class="sv" style="color:#16a34a">₹${NUM(totalPaid)}</div><div class="sl">Total Paid</div></div>
+          <div class="inf-stat"><div class="sv">${payCount}</div><div class="sl">Payments</div></div>
+          <div class="inf-stat"><div class="sv">${lastDate||'—'}</div><div class="sl">Last Paid</div></div>
+          <div class="inf-stat"><div class="sv" style="color:var(--paid)">${NUM(inf.pro_conversions||0)}</div><div class="sl">Conversions</div></div>
+        </div>
+        <span class="inf-chev">▼</span>
+      </div>
+      <div class="inf-expand pay-tab-exp" id="pexp-${i}" style="display:none;padding:10px 14px 12px">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Date</th>
+            <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Amount</th>
+            <th style="text-align:left;padding:5px 10px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)">Note</th>
+          </tr></thead>
+          <tbody>${histRows}</tbody>
+          <tfoot><tr>
+            <td colspan="2" style="padding:6px 10px;font-size:12px;font-weight:700;color:var(--muted);border-top:1px solid var(--line)">Total</td>
+            <td style="padding:6px 10px;font-size:14px;font-weight:800;color:#16a34a;border-top:1px solid var(--line)">₹${NUM(totalPaid)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.pay-tab-row').forEach((row,i)=>{
+    row.onclick=()=>{
+      const exp=document.getElementById(`pexp-${i}`);
+      const chev=row.querySelector('.inf-chev');
+      const open=exp.style.display==='none';
+      exp.style.display=open?'block':'none';
+      if(chev)chev.textContent=open?'▲':'▼';
+    };
+  });
+}
+function saveEmNote(id,val){const n=emNotes();n[id]=val;localStorage.setItem('em_notes_v1',JSON.stringify(n))}
+function getExtraEM(){try{return JSON.parse(localStorage.getItem('em_extra_v1')||'[]')}catch{return []}}
+function saveExtraEM(c){const ex=getExtraEM();if(!ex.find(e=>e.id===c.id)){ex.unshift(c);localStorage.setItem('em_extra_v1',JSON.stringify(ex))}}
+
+async function fetchLoopsCampaigns(){
+  try{
+    const r=await fetch('/api/loops-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'campaigns'})});
+    const d=await r.json();
+    if(d.error||!d.campaigns)return [];
+    return (d.campaigns||[]).map(c=>{
+      // Loops may return stats at top-level or nested under stats/metrics/analytics
+      const s=c.stats||c.metrics||c.analytics||c.emailStats||{};
+      const subject=c.subject||c.emailSubject||c.subjectLine||c.email_subject||'—';
+      const sent=+s.sent||+s.total||+c.recipientCount||+c.sentCount||0;
+      const delivered=+s.delivered||+s.deliveries||+c.deliveredCount||0;
+      const opens=+s.uniqueOpens||+s.unique_opens||+s.opened||+s.opens||+c.openCount||0;
+      const clicks=+s.uniqueClicks||+s.unique_clicks||+s.linkClicked||+s.clicks||+c.clickCount||0;
+      return {
+        id:c.id||'',name:c.name||'Untitled',subject,
+        send_date:c.sentAt||c.scheduledAt||c.createdAt||'',
+        status:(c.status||'sent').toLowerCase(),platform:'loops',
+        list_size:c.audienceFilterCount||c.recipientCount||c.listSize||sent||0,
+        list_name:c.audienceName||c.listName||c.audienceFilter||'',
+        sent,delivered,opens,clicks,
+        bounces:+s.bounced||+s.bounces||+c.bounceCount||0,
+        unsubs:+s.unsubscribed||+s.unsubscribes||+c.unsubscribeCount||0,
+        spam:+s.markedAsSpam||+s.spam||+c.spamCount||0,
+        banner_views:0,conversions:0,revenue:0,
+        type:'campaign',
+        loops_url:c._loopsUrl||`https://app.loops.so/campaigns/${c.id}`,
+      };
+    });
+  }catch{return [];}
+}
+
+async function fetchPHEmailData(){
+  // Person-based attribution: match delivery/open/click events to campaigns by person_id + 30-day window
+  // This correctly shows delivered/opens per campaign even when Loops doesn't pass loop_name on those events
+  try{
+    const mainSQL=`SELECT coalesce(nullIf(properties.campaign_id,''),nullIf(properties.loop_id,''),'(noid)') AS id, coalesce(nullIf(anyIf(properties.campaign_name,event='email_sent'),''),nullIf(anyIf(properties.loop_name,event='email_sent'),''),id) AS campaign, anyIf(properties.email_channel,event='email_sent') AS channel, countIf(event='email_sent') AS sent, countIf(event='email_delivered') AS delivered, uniqIf(person_id,event='email_opened') AS opens, countIf(event='email_bounced') AS bounces, countIf(event='email_unsubscribed') AS unsubs, countIf(event='email_banner_viewed') AS banner_views, maxIf(timestamp,event='email_sent') AS last_sent, minIf(timestamp,event='email_sent') AS first_sent FROM events WHERE event IN ('email_sent','email_delivered','email_opened','email_bounced','email_unsubscribed','email_banner_viewed') AND (nullIf(properties.campaign_id,'') IS NOT NULL OR nullIf(properties.loop_id,'') IS NOT NULL) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%' GROUP BY id HAVING sent>0 ORDER BY last_sent DESC LIMIT 200`;
+    const clickSQL=`SELECT s.cid AS id, uniq(c.person_id) AS clicks FROM (SELECT person_id, coalesce(nullIf(properties.campaign_id,''),nullIf(properties.loop_id,'')) AS cid, timestamp AS sent_at FROM events WHERE event='email_sent' AND (nullIf(properties.campaign_id,'') IS NOT NULL OR nullIf(properties.loop_id,'') IS NOT NULL) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%') s LEFT JOIN (SELECT person_id, timestamp AS click_ts FROM events WHERE event IN ('email_clicked','$workflows_email_link_clicked')) c ON s.person_id=c.person_id AND c.click_ts>=s.sent_at AND c.click_ts<=s.sent_at+INTERVAL 30 DAY GROUP BY id HAVING clicks>0`;
+    const batch=await qBatch([{id:'main',query:mainSQL},{id:'clicks',query:clickSQL}]);
+    const mainRows=batchGet(batch,'main');
+    const clickRows=batchGet(batch,'clicks');
+    const clickMap=new Map(clickRows.map(r=>[r.id,+r.clicks||0]));
+    return mainRows.map(r=>({...r,clicks:clickMap.get(r.id)||0}));
+  }catch{return [];}
+}
+
+async function loadEmail(){
+  const listEl=document.getElementById('em-list');
+  const kpisEl=document.getElementById('em-kpis');
+  if(!listEl)return;
+  listEl.innerHTML='<div class="loadingcard">Loading…</div>';
+  kpisEl.innerHTML='';
+
+  const [loopsCamps,phRows]=await Promise.all([fetchLoopsCampaigns(),fetchPHEmailData()]);
+
+  const merged=new Map();
+  for(const ph of phRows){
+    // ph now has: id, campaign, channel, sent, delivered, opens, clicks, bounces, unsubs, banner_views, last_sent, first_sent
+    const isCamp=(ph.channel||'').toLowerCase()==='campaign';
+    const key=(ph.id||'').toLowerCase();
+    if(!key||key==='(noid)')continue;
+    merged.set(key,{
+      id:ph.id||key,name:ph.campaign||ph.id,subject:'—',
+      send_date:ph.last_sent||'',status:'sent',platform:'posthog',
+      list_size:0,list_name:'',
+      sent:+ph.sent||0,delivered:+ph.delivered||0,
+      opens:+ph.opens||0,clicks:+ph.clicks||0,
+      bounces:+ph.bounces||0,unsubs:+ph.unsubs||0,
+      banner_views:+ph.banner_views||0,spam:0,conversions:0,revenue:0,
+      type:isCamp?'campaign':'automation',loops_url:'',
+    });
+  }
+  // idIndex: id → map key (for cases where key differs from id — shouldn't happen now but kept as safety)
+  const idIndex=new Map();
+  for(const [k,v] of merged){if(v.id&&v.id.toLowerCase()!==k)idIndex.set(v.id.toLowerCase(),k);}
+
+  for(const lc of loopsCamps){
+    // Fall back to id as key when name is empty (prevents all unnamed campaigns collapsing to key '')
+    const nameKey=(lc.name||'').toLowerCase().trim()||(lc.id||'').toLowerCase();
+    // Try matching: by name first, then by Loops ID
+    const idKey=(lc.id||'').toLowerCase().trim();
+    const existingKey=merged.has(nameKey)?nameKey:merged.has(idKey)?idKey:idIndex.get(lc.id);
+    const ex=existingKey?merged.get(existingKey):null;
+    if(ex){
+      ex.id=lc.id||ex.id;
+      // If the key was the raw loop_id, overwrite name with human-readable Loops name
+      if(lc.name&&lc.name!==ex.name)ex.name=lc.name;
+      if(lc.subject&&lc.subject!=='—')ex.subject=lc.subject;
+      ex.send_date=lc.send_date||ex.send_date; ex.status=lc.status||ex.status;
+      ex.platform='loops'; ex.type='campaign';
+      ex.list_size=lc.list_size||ex.list_size; ex.list_name=lc.list_name||ex.list_name;
+      ex.loops_url=lc.loops_url||ex.loops_url;
+      // Loops stats override PostHog attribution only when Loops has real stats
+      if(lc.sent>0){ex.sent=lc.sent;ex.delivered=lc.delivered;ex.opens=lc.opens;ex.clicks=lc.clicks;ex.bounces=lc.bounces;ex.unsubs=lc.unsubs;ex.spam=lc.spam;}
+    } else {
+      merged.set(nameKey,lc);
+    }
+  }
+  for(const ec of getExtraEM()){
+    const key=(ec.name||'').toLowerCase().trim();
+    if(!merged.has(key))merged.set(key,ec);
+  }
+
+  EM_DATA=Array.from(merged.values()).sort((a,b)=>(b.send_date||'')>(a.send_date||'')?1:-1);
+
+  const totSent=EM_DATA.reduce((s,c)=>s+(+c.sent||0),0);
+  const totDel=EM_DATA.reduce((s,c)=>s+(+c.delivered||0),0);
+  const totOpens=EM_DATA.reduce((s,c)=>s+(+c.opens||0),0);
+  const totClicks=EM_DATA.reduce((s,c)=>s+(+c.clicks||0),0);
+  const totUnsubs=EM_DATA.reduce((s,c)=>s+(+c.unsubs||0),0);
+  const totBounces=EM_DATA.reduce((s,c)=>s+(+c.bounces||0),0);
+  kpisEl.style.gridTemplateColumns='repeat(5,1fr)';
+  kpisEl.innerHTML=[
+    ['Campaigns',EM_DATA.length,'total tracked','--brand'],
+    ['Total Sent',totSent,'all campaigns','--sig'],
+    ['Avg Open Rate',PCT(totOpens,totDel||totSent),'unique opens / delivered','--paid'],
+    ['Avg CTOR',PCT(totClicks,totOpens||1),'clicks / openers','--ret'],
+    ['Unsubscribes',totUnsubs,'total unsubs','--warn'],
+  ].map(([n,v,c,col])=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${col})"></span>${n}</div><div class="v" style="font-size:${typeof v==='string'&&v.length>6?'16px':'22px'}">${typeof v==='number'?NUM(v):v}</div><div class="c">${c}</div></div>`).join('');
+
+  const allCt=EM_DATA.length;
+  const campCt=EM_DATA.filter(c=>c.type==='campaign').length;
+  const autoCt=EM_DATA.filter(c=>c.type==='automation').length;
+  ['em-ct-all','em-ct-camp','em-ct-auto'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=[allCt,campCt,autoCt][i];});
+
+  renderEmailList();
+  bindEmailControls();
+}
+
+function filteredEM(){
+  const sq=emState.search.toLowerCase().trim();
+  const list=EM_DATA.filter(c=>{
+    if(emState.platform!=='all'&&c.type!==emState.platform)return false;
+    if(sq&&!((c.name||'').toLowerCase().includes(sq)||(c.subject||'').toLowerCase().includes(sq)))return false;
+    return true;
+  });
+  const sortFns={
+    date_desc:(a,b)=>(b.send_date||'')>(a.send_date||'')?1:-1,
+    date_asc:(a,b)=>(a.send_date||'')>(b.send_date||'')?1:-1,
+    sent_desc:(a,b)=>(+b.sent||0)-(+a.sent||0),
+    opens_desc:(a,b)=>(+b.opens||0)-(+a.opens||0),
+    open_rate_desc:(a,b)=>{
+      const ra=(+a.opens||0)/((+a.delivered||0)||(+a.sent||1));
+      const rb=(+b.opens||0)/((+b.delivered||0)||(+b.sent||1));
+      return rb-ra;
+    },
+    clicks_desc:(a,b)=>(+b.clicks||0)-(+a.clicks||0),
+    ctor_desc:(a,b)=>{
+      const ra=(+a.opens||0)>0?(+a.clicks||0)/(+a.opens||0):0;
+      const rb=(+b.opens||0)>0?(+b.clicks||0)/(+b.opens||0):0;
+      return rb-ra;
+    },
+    unsubs_desc:(a,b)=>(+b.unsubs||0)-(+a.unsubs||0),
+    bounces_desc:(a,b)=>(+b.bounces||0)-(+a.bounces||0),
+  };
+  return list.sort(sortFns[emState.sort]||sortFns.date_desc);
+}
+
+function renderEmailList(){
+  const listEl=document.getElementById('em-list');
+  if(!listEl)return;
+  const data=filteredEM();
+  const notes=emNotes();
+  const isPct=emState.view==='pct';
+  if(!data.length){listEl.innerHTML='<div class="loadingcard">No campaigns match the current filter.</div>';return;}
+
+  listEl.innerHTML=data.map((c,i)=>{
+    const sent=+c.sent||0,del=+c.delivered||0,opens=+c.opens||0,clicks=+c.clicks||0;
+    const conv=+c.conversions||0,rev=+c.revenue||0,unsubs=+c.unsubs||0,bounces=+c.bounces||0;
+    const base=del||sent||1;
+    const dR=PCT(del,sent),oR=PCT(opens,base),cR=PCT(clicks,base),ctor=PCT(clicks,opens||1),convR=PCT(conv,sent),unsubR=PCT(unsubs,base),bounceR=PCT(bounces,sent);
+    const pctD=sent>0?Math.min(100,del/sent*100):0;
+    const pctO=base>0?Math.min(100,opens/base*100):0;
+    const pctC=opens>0?Math.min(100,clicks/opens*100):0;
+    const isUntagged=(c.name||'')==='(unknown)';
+    const displayName=isUntagged?'Untagged emails':h(c.name||'—');
+    const typeBadge=c.type==='campaign'
+      ?`<span class="em-plat" style="background:#f0fdf4;color:#15803d;font-weight:700">Campaign</span>`
+      :`<span class="em-plat" style="background:#eff6ff;color:#1d4ed8;font-weight:700">Automation</span>`;
+    const platBadge=c.platform==='loops'?`<span class="em-plat em-plat-loops">Loops</span>`:`<span class="em-plat em-plat-ph">PostHog</span>`;
+    const untagBadge=isUntagged?`<span class="em-plat" style="background:#f3f4f6;color:#6b7280;font-style:italic">no campaign tag</span>`:'';
+    const statusBadge=c.status&&c.status!=='sent'?`<span class="em-status em-status-${c.status}">${c.status}</span>`:'';
+    const noStatsBadge=(c.type==='campaign'&&+c.sent===0&&c.loops_url)?`<a href="${h(c.loops_url)}" target="_blank" rel="noopener" style="font-size:10px;color:var(--brand);text-decoration:none;margin-left:4px;font-weight:600" onclick="event.stopPropagation()">View in Loops ↗</a>`:'';
+    const dateStr=(c.send_date||'').slice(0,10)||'—';
+    const mc=(v,r,lbl,col='')=>`<div class="em-metric"><div class="mv" ${col?`style="color:${col}"`:''}>${isPct?r:NUM(v)}</div><div class="ml">${lbl}</div>${!isPct&&v>0&&r!=='—'?`<div class="mr">${r}</div>`:''}</div>`;
+    return `<div class="em-row" data-em-i="${i}">
+      <div class="em-row-main">
+        <span class="em-rank">${i+1}</span>
+        <div class="em-info">
+          <div class="em-name">${isUntagged?`<span style="color:var(--muted);font-style:italic">${displayName}</span>`:displayName}${typeBadge}${platBadge}${untagBadge}${statusBadge}${noStatsBadge}</div>
+          <div class="em-subject" title="${h(c.subject||'')}">${h(c.subject&&c.subject!=='—'?c.subject:'No subject on file')}</div>
+          <div class="em-meta"><span>${dateStr}</span>${c.list_name?`<span>· ${h(c.list_name)}</span>`:''} ${c.list_size?`<span>· ${NUM(c.list_size)} list</span>`:''}</div>
+        </div>
+        <div class="em-metrics">
+          ${mc(sent,'100%','Sent')}
+          ${mc(del,dR,'Deliv.','var(--sig)')}
+          ${mc(opens,oR,'Opens','var(--paid)')}
+          ${mc(clicks,cR,'Clicks','var(--ret)')}
+          ${unsubs>0?mc(unsubs,unsubR,'Unsubs','var(--warn)'):''}
+          ${bounces>0?mc(bounces,bounceR,'Bounces','var(--bad)'):''}
+        </div>
+        <span class="em-chev">▼</span>
+      </div>
+      <div class="em-progbar">
+        <div class="em-prog-d" style="width:${pctD.toFixed(1)}%"></div>
+        <div class="em-prog-o" style="width:${pctO.toFixed(1)}%"></div>
+        <div class="em-prog-c" style="width:${pctC.toFixed(1)}%"></div>
+      </div>
+      <div class="em-expand"></div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.em-row').forEach((row,i)=>{
+    const c=data[i];
+    row.querySelector('.em-row-main').addEventListener('click',async()=>{
+      row.classList.toggle('open');
+      const expand=row.querySelector('.em-expand');
+      if(!row.classList.contains('open')||expand.dataset.loaded)return;
+      await expandEmailRow(c,expand);
+    });
+  });
+}
+
+async function expandEmailRow(c,expand){
+  const sent=+c.sent||0,del=+c.delivered||0,opens=+c.opens||0,clicks=+c.clicks||0;
+  const conv=+c.conversions||0,rev=+c.revenue||0,unsubs=+c.unsubs||0,bounces=+c.bounces||0,spam=+c.spam||0,bv=+c.banner_views||0;
+  const base=del||sent||1;
+  const dR=PCT(del,sent),oR=PCT(opens,base),cR=PCT(clicks,base),ctor=PCT(clicks,opens||1);
+  const convR=PCT(conv,sent),unsubR=PCT(unsubs,base),bounceR=PCT(bounces,sent);
+  const notes=emNotes();
+  const noteVal=notes[c.id]||'';
+  const safeId='emr_'+String(c.id||'x').replace(/[^a-z0-9]/gi,'_').slice(0,40);
+
+  const isCampNoStats=c.type==='campaign'&&sent===0;
+  expand.innerHTML=`
+    <div class="em-detail-grid">
+      ${[
+        [NUM(sent),'','Sent'],[NUM(del),dR,'Delivered'],[NUM(opens),oR,'Unique Opens'],[NUM(clicks),cR,'Unique Clicks'],[ctor,'Click-to-Open','CTOR'],
+        [NUM(conv),convR,'Conversions'],[rev>0?'&#8377;'+NUM(rev):'—','','Revenue'],[NUM(unsubs),unsubR,'Unsubscribes'],[NUM(bounces),bounceR,'Bounces'],[bv>0?NUM(bv):'—','','Banner Views'],
+      ].map(([dv,dp,dl])=>`<div class="em-dkpi"><div class="dv">${dv}</div>${dp?`<div class="dp">${dp}</div>`:''}<div class="dl">${dl}</div></div>`).join('')}
+    </div>
+    ${isCampNoStats&&c.loops_url?`<div style="padding:12px;background:#eff6ff;border-radius:8px;margin-bottom:12px;font-size:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="color:#1d4ed8">ℹ This is a one-time broadcast campaign. Stats are only available in the Loops dashboard.</span>
+      <a href="${h(c.loops_url)}" target="_blank" rel="noopener" style="background:var(--brand);color:#fff;border-radius:6px;padding:5px 12px;text-decoration:none;font-weight:600;white-space:nowrap">View stats in Loops ↗</a>
+    </div>`:''}
+    <div id="${safeId}"><div class="loadingcard">Loading recipients…</div></div>
+    <textarea class="em-notes" placeholder="Notes for this campaign…">${h(noteVal)}</textarea>
+  `;
+
+  expand.querySelector('.em-notes').addEventListener('input',e=>saveEmNote(c.id,e.target.value));
+
+  const recipEl=document.getElementById(safeId);
+  const campId=(c.id||'').replace(/'/g,"''");
+  // Filter by campaign_id (broadcast) or loop_id (automation) — both are stored in c.id
+  const idFilter=campId&&campId!=='(noid)'
+    ?`(nullIf(properties.campaign_id,'')='${campId}' OR nullIf(properties.loop_id,'')='${campId}')`
+    :`(properties.loop_name IS NULL OR properties.loop_name='')`;
+  if(recipEl&&campId){
+    try{
+      // Include $workflows_email_link_clicked via person_id subquery since it carries no campaign_id/loop_id
+      const recips=await q(`SELECT any(person.properties.email) AS email, any(coalesce(nullIf(person.properties.$name,''),nullIf(person.properties.name,''))) AS name, maxIf(1,event='email_delivered') AS delivered, maxIf(1,event='email_opened') AS opened, maxIf(1,event IN ('email_clicked','$workflows_email_link_clicked')) AS clicked FROM events WHERE ((${idFilter} AND event IN ('email_sent','email_delivered','email_opened','email_bounced','email_clicked')) OR (event='$workflows_email_link_clicked' AND person_id IN (SELECT DISTINCT person_id FROM events WHERE event='email_sent' AND ${idFilter}))) AND NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND NOT lower(coalesce(person.properties.email,'')) LIKE '%test%' GROUP BY person_id ORDER BY opened DESC, clicked DESC LIMIT 200`);
+      expand.dataset.loaded='1';
+      if(!recips.length){recipEl.innerHTML='<div class="loadingcard">No recipient data in PostHog for this campaign.</div>';return;}
+      const opCt=recips.filter(r=>+r.opened).length;
+      const clCt=recips.filter(r=>+r.clicked).length;
+      recipEl.innerHTML=`<div style="display:flex;align-items:center;gap:14px;font-size:12px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-weight:700">${recips.length} recipients in PostHog</span>
+        <span style="color:var(--paid)">● ${opCt} opened</span>
+        <span style="color:var(--ret)">● ${clCt} clicked</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line)">
+          <th style="text-align:left;padding:4px 8px 4px 0">Recipient</th>
+          <th style="text-align:center;padding:4px 8px">Deliv.</th>
+          <th style="text-align:center;padding:4px 8px">Opened</th>
+          <th style="text-align:center;padding:4px 0 4px 8px">Clicked</th>
+        </tr></thead>
+        <tbody>${recips.map(r=>{const uc=avatarColor(r.email||'');return`<tr style="border-bottom:1px solid var(--chip)">
+          <td style="padding:6px 8px 6px 0"><div style="display:flex;align-items:center;gap:7px">
+            <div style="width:24px;height:24px;border-radius:50%;background:${uc};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;flex:0 0 24px">${initials(r.name||'')}</div>
+            <div><div style="font-weight:600;font-size:12px">${h(r.name||'—')}</div><div style="color:var(--muted);font-size:10px">${h(r.email||'')}</div></div>
+          </div></td>
+          <td style="text-align:center;padding:6px 8px">${+r.delivered?'<span style="color:var(--sig)">✓</span>':'—'}</td>
+          <td style="text-align:center;padding:6px 8px">${+r.opened?'<span style="color:var(--paid);font-weight:700">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+          <td style="text-align:center;padding:6px 0 6px 8px">${+r.clicked?'<span style="color:var(--ret);font-weight:700">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+        </tr>`}).join('')}</tbody>
+      </table>`;
+    }catch(e){
+      if(recipEl)recipEl.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;
+      expand.dataset.loaded='1';
+    }
+  }else{expand.dataset.loaded='1';if(recipEl)recipEl.innerHTML='';}
+}
+
+async function exportEmailXLS(){
+  const btn=document.getElementById('em-export');
+  if(btn){btn.disabled=true;btn.textContent='Building…';}
+  try{
+    if(!window.XLSX){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+        s.onload=res;s.onerror=rej;
+        document.head.appendChild(s);
+      });
+    }
+    const notes=emNotes();
+    const pct=(a,b)=>b>0?a/b:0;
+    const FMT_PCT='0.00%', FMT_NUM='#,##0', FMT_REV='#,##0';
+    // Colors from template
+    const C_TITLE='1B3A6B';   // dark navy — title banner
+    const C_HDR  ='2E4FA3';   // medium navy — header row
+    const C_INST ='D6E4F0';   // light blue — instruction row
+    const C_TOT  ='D9D9D9';   // light gray — totals row
+    const C_ROW0 ='FFFFFF';   // white
+    const C_ROW1 ='F0F4FB';   // very light blue-gray (alternating)
+    const bdr={top:{style:'thin',color:{rgb:'C0C8D8'}},bottom:{style:'thin',color:{rgb:'C0C8D8'}},left:{style:'thin',color:{rgb:'C0C8D8'}},right:{style:'thin',color:{rgb:'C0C8D8'}}};
+    const titleFont={bold:true,color:{rgb:'FFFFFF'},sz:12,name:'Calibri'};
+    const hdrFont ={bold:true,color:{rgb:'FFFFFF'},sz:10,name:'Calibri'};
+    const instFont ={italic:true,color:{rgb:'1B3A6B'},sz:9,name:'Calibri'};
+    const bodyFont ={sz:9,name:'Calibri'};
+    const totFont  ={bold:true,sz:9,name:'Calibri'};
+
+    function styleCell(ws,addr,fillRgb,font,numFmt,align){
+      if(!ws[addr])ws[addr]={v:'',t:'s'};
+      ws[addr].s={fill:{fgColor:{rgb:fillRgb}},font:font,alignment:align||{vertical:'center'},border:bdr};
+      if(numFmt)ws[addr].z=numFmt;
+    }
+
+    function buildSheet(data,sheetTitle,sheetInst,cols,rowMapper,totMapper,pctCols,revCols,txtCols){
+      const rows=[[sheetTitle],[sheetInst],[],cols,...data.map(rowMapper)];
+      rows.push(totMapper(data));
+      const ws=XLSX.utils.aoa_to_sheet(rows);
+      const nc=cols.length;
+      ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nc-1}},{s:{r:1,c:0},e:{r:1,c:nc-1}}];
+      const range=XLSX.utils.decode_range(ws['!ref']);
+      const totalRow=rows.length-1;
+      for(let R=range.s.r;R<=range.e.r;R++){
+        for(let C=0;C<nc;C++){
+          const addr=XLSX.utils.encode_cell({r:R,c:C});
+          if(!ws[addr])ws[addr]={v:'',t:'s'};
+          const cell=ws[addr];
+          if(R===0){
+            cell.s={fill:{fgColor:{rgb:C_TITLE}},font:titleFont,alignment:{horizontal:'center',vertical:'center'},border:bdr};
+          } else if(R===1){
+            cell.s={fill:{fgColor:{rgb:C_INST}},font:instFont,alignment:{horizontal:'left',vertical:'center'},border:bdr};
+          } else if(R===2){
+            cell.s={fill:{fgColor:{rgb:'FFFFFF'}},font:bodyFont};
+          } else if(R===3){
+            cell.s={fill:{fgColor:{rgb:C_HDR}},font:hdrFont,alignment:{horizontal:'center',vertical:'center'},border:bdr};
+          } else if(R===totalRow){
+            const isNum=typeof cell.v==='number';
+            cell.s={fill:{fgColor:{rgb:C_TOT}},font:totFont,alignment:{horizontal:isNum?'center':'left',vertical:'center'},border:bdr};
+            if(isNum){
+              cell.t='n';
+              if(pctCols.includes(C))cell.z=FMT_PCT;
+              else if(revCols.includes(C))cell.z=FMT_REV;
+              else cell.z=FMT_NUM;
+            }
+          } else if(R>=4){
+            const isNum=typeof cell.v==='number';
+            const fillRgb=(R%2===0)?C_ROW0:C_ROW1;
+            cell.s={fill:{fgColor:{rgb:fillRgb}},font:bodyFont,alignment:{horizontal:isNum&&!txtCols.includes(C)?'center':'left',vertical:'center'},border:bdr};
+            if(isNum){
+              cell.t='n';
+              if(pctCols.includes(C))cell.z=FMT_PCT;
+              else if(revCols.includes(C))cell.z=FMT_REV;
+              else cell.z=FMT_NUM;
+            }
+          }
+        }
+      }
+      // Row heights
+      ws['!rows']=[{hpt:22},{hpt:16},{hpt:6},{hpt:18}];
+      return ws;
+    }
+
+    // ── Campaign Level (one-time broadcasts) ────────────────────────────────
+    const campCols=['Send Date','Platform','Campaign Name','Subject Line','List / Segment','Loops ID','List Size','Emails Sent','Delivered','Delivery Rate','Opens','Open Rate','Link Clicks','Click Rate','CTOR','Conversions','Conv Rate','Revenue','Unsubscribes','Unsub Rate','Bounces','Bounce Rate','Notes'];
+    // pctCols: indices of rate columns (0-based)
+    const campPct=[9,11,13,14,16,19,21];
+    const campRev=[17];
+    const campTxt=[0,1,2,3,4,5,22];
+    function campRow(c){
+      const sent=+c.sent||0,del=+c.delivered||0,opens=+c.opens||0,clicks=+c.clicks||0;
+      const conv=+c.conversions||0,rev=+c.revenue||0,unsubs=+c.unsubs||0,bounces=+c.bounces||0;
+      const base=del||sent||1;
+      return [
+        (c.send_date||'').slice(0,10),
+        'Loops',
+        c.name==='(unknown)'?'Untagged':(c.name||''),
+        c.subject&&c.subject!=='—'?c.subject:'',
+        c.list_name||'',
+        c.id||'',
+        +c.list_size||0,
+        sent,del,pct(del,sent),
+        opens,pct(opens,base),
+        clicks,pct(clicks,base),pct(clicks,opens||1),
+        conv,pct(conv,sent||1),
+        rev,
+        unsubs,pct(unsubs,base),
+        bounces,pct(bounces,sent||1),
+        notes[c.id]||''
+      ];
+    }
+    function campTot(data){
+      const tS=data.reduce((s,c)=>s+(+c.sent||0),0);
+      const tD=data.reduce((s,c)=>s+(+c.delivered||0),0);
+      const tO=data.reduce((s,c)=>s+(+c.opens||0),0);
+      const tCl=data.reduce((s,c)=>s+(+c.clicks||0),0);
+      const tCo=data.reduce((s,c)=>s+(+c.conversions||0),0);
+      const tR=data.reduce((s,c)=>s+(+c.revenue||0),0);
+      const tU=data.reduce((s,c)=>s+(+c.unsubs||0),0);
+      const tB=data.reduce((s,c)=>s+(+c.bounces||0),0);
+      const tDel=tD||tS||1;
+      return ['','','TOTAL','','','',data.reduce((s,c)=>s+(+c.list_size||0),0),tS,tD,pct(tD,tS),tO,pct(tO,tDel),tCl,pct(tCl,tDel),pct(tCl,tO||1),tCo,pct(tCo,tS),tR,tU,pct(tU,tDel),tB,pct(tB,tS),''];
+    }
+
+    // ── Workflow Level (automated sequences) ────────────────────────────────
+    const autoCols=['First Sent','Automation Name','Recipients Sent','Delivered','Unique Opens','Open Rate','Unique Clicks','Click Rate','CTOR','Conversions','Conv Rate','Revenue','Unsubscribes','Unsub Rate','Bounces','Bounce Rate','Notes'];
+    const autoPct=[5,7,8,10,13,15];
+    const autoRev=[11];
+    const autoTxt=[0,1,16];
+    function autoRow(c){
+      const sent=+c.sent||0,del=+c.delivered||0,opens=+c.opens||0,clicks=+c.clicks||0;
+      const conv=+c.conversions||0,rev=+c.revenue||0,unsubs=+c.unsubs||0,bounces=+c.bounces||0;
+      const base=del||sent||1;
+      return [
+        (c.send_date||'').slice(0,10),
+        c.name==='(unknown)'?'Untagged':(c.name||''),
+        sent,del,
+        opens,pct(opens,base),
+        clicks,pct(clicks,base),pct(clicks,opens||1),
+        conv,pct(conv,sent||1),
+        rev,
+        unsubs,pct(unsubs,base),
+        bounces,pct(bounces,sent||1),
+        notes[c.id]||''
+      ];
+    }
+    function autoTot(data){
+      const tS=data.reduce((s,c)=>s+(+c.sent||0),0);
+      const tD=data.reduce((s,c)=>s+(+c.delivered||0),0);
+      const tO=data.reduce((s,c)=>s+(+c.opens||0),0);
+      const tCl=data.reduce((s,c)=>s+(+c.clicks||0),0);
+      const tCo=data.reduce((s,c)=>s+(+c.conversions||0),0);
+      const tR=data.reduce((s,c)=>s+(+c.revenue||0),0);
+      const tU=data.reduce((s,c)=>s+(+c.unsubs||0),0);
+      const tB=data.reduce((s,c)=>s+(+c.bounces||0),0);
+      const base=tD||tS||1;
+      return ['','TOTAL',tS,tD,tO,pct(tO,base),tCl,pct(tCl,base),pct(tCl,tO||1),tCo,pct(tCo,tS),tR,tU,pct(tU,base),tB,pct(tB,tS),''];
+    }
+
+    const campData=EM_DATA.filter(c=>c.type==='campaign');
+    const autoData=EM_DATA.filter(c=>c.type==='automation');
+
+    const wsC=buildSheet(campData,
+      'Email Marketing Report — Campaign Level (One-Time Broadcasts)',
+      'One row per broadcast send. Delivery/open/click rates are per delivered recipients. Data sourced from PostHog + Loops.',
+      campCols,campRow,campTot,campPct,campRev,campTxt);
+    wsC['!cols']=[{wch:11},{wch:8},{wch:30},{wch:34},{wch:18},{wch:24},{wch:9},{wch:9},{wch:9},{wch:11},{wch:9},{wch:11},{wch:9},{wch:11},{wch:9},{wch:9},{wch:9},{wch:9},{wch:11},{wch:11},{wch:9},{wch:11},{wch:26}];
+
+    const wsA=buildSheet(autoData,
+      'Email Marketing Report — Workflow Level (Automated Sequences)',
+      'One row per automated email sequence (PostHog loop_name). Stats are cumulative since sequence launch.',
+      autoCols,autoRow,autoTot,autoPct,autoRev,autoTxt);
+    wsA['!cols']=[{wch:11},{wch:34},{wch:13},{wch:11},{wch:13},{wch:11},{wch:13},{wch:11},{wch:9},{wch:11},{wch:9},{wch:9},{wch:13},{wch:11},{wch:9},{wch:11},{wch:26}];
+
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,wsC,'Campaign Level');
+    XLSX.utils.book_append_sheet(wb,wsA,'Workflow Level');
+    const today=new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb,'email-tracker-'+today+'.xlsx');
+  }catch(e){
+    alert('Export failed: '+e.message);
+    console.error(e);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='↓ Export XLS';}
+  }
+}
+
+function bindEmailControls(){
+  const ref=document.getElementById('em-refresh');
+  if(ref)ref.onclick=()=>{EM_DATA=[];loadEmail();};
+  const expBtn=document.getElementById('em-export');
+  if(expBtn)expBtn.onclick=()=>exportEmailXLS();
+  const sortSel=document.getElementById('em-sort');
+  if(sortSel)sortSel.addEventListener('change',()=>{emState.sort=sortSel.value;renderEmailList();});
+  const si=document.getElementById('em-search');
+  if(si)si.addEventListener('input',()=>{emState.search=si.value;renderEmailList();});
+  document.querySelectorAll('#em-view-seg button').forEach(b=>b.addEventListener('click',()=>{
+    emState.view=b.dataset.v;
+    document.querySelectorAll('#em-view-seg button').forEach(x=>x.classList.toggle('on',x===b));
+    renderEmailList();
+  }));
+  document.querySelectorAll('.em-tab').forEach(t=>t.addEventListener('click',()=>{
+    emState.platform=t.dataset.ep;
+    document.querySelectorAll('.em-tab').forEach(x=>x.classList.toggle('active',x===t));
+    renderEmailList();
+  }));
+  const addBtn=document.getElementById('em-add');
+  if(addBtn)addBtn.onclick=()=>document.getElementById('em-modal').classList.add('show');
+  const fetchBtn=document.getElementById('em-modal-fetch');
+  if(fetchBtn)fetchBtn.onclick=async()=>{
+    const id=(document.getElementById('em-modal-id').value||'').trim();
+    const errEl=document.getElementById('em-modal-err');
+    errEl.style.display='none';
+    if(!id){errEl.textContent='Please enter a Loops campaign ID.';errEl.style.display='block';return;}
+    fetchBtn.disabled=true;fetchBtn.textContent='Fetching…';
+    try{
+      const r=await fetch('/api/loops-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'campaign',id})});
+      const d=await r.json();
+      if(d.error)throw new Error(d.error);
+      const s=d.stats||d.metrics||{};
+      saveExtraEM({
+        id:d.id||id,name:d.name||id,subject:d.subject||'—',
+        send_date:d.sentAt||d.createdAt||'',status:(d.status||'sent').toLowerCase(),
+        platform:'loops',list_size:0,list_name:'',
+        sent:+s.sent||0,delivered:+s.delivered||0,
+        opens:+s.uniqueOpens||+s.opened||0,clicks:+s.uniqueClicks||+s.linkClicked||0,
+        bounces:+s.bounced||0,unsubs:+s.unsubscribed||0,spam:+s.markedAsSpam||0,
+        conversions:0,revenue:0,
+      });
+      document.getElementById('em-modal').classList.remove('show');
+      document.getElementById('em-modal-id').value='';
+      EM_DATA=[];await loadEmail();
+    }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
+    finally{fetchBtn.disabled=false;fetchBtn.textContent='Fetch & Add';}
+  };
+}
+
+const LOADERS={acquisition:loadAcquisition,activation:loadActivation,monetization:loadMonetization,retention:loadRetention,lifecycle:loadLifecycle,email:loadEmail,features:loadFeatures,dataquality:loadDataQuality,referrals:loadReferrals,influencers:loadInfluencers};
 
 /* ---------- orchestration ---------- */
 async function loadOverview(){
@@ -1054,22 +2414,22 @@ async function loadOverview(){
     renderRevenueTilesData(batchGet(pg,'rev'),batchGet(pg,'active')[0]||{});
   }).catch(e=>{if(revEl)revEl.innerHTML=`<div class="cardErr">⚠ ${e.message}</div>`;});
 
-  // Events batch — overlay stays only until this resolves
+  // All event queries in one batch — runs in parallel server-side
   const ev=await qBatch([
     {id:'kpi',query:kpiSQL()},
-    {id:'activated',query:activatedSQL()},
+    {id:'act',query:activatedSQL()},
     {id:'trend',query:trendSQL()},
     {id:'breakdown',query:breakdownSQL()},
     {id:'heat',query:`SELECT toDayOfWeek(timestamp) AS dow, toHour(timestamp) AS hr, count(DISTINCT person_id) AS c FROM events WHERE event='${state.heatMetric}' AND ${baseWhere()} GROUP BY dow,hr ORDER BY dow,hr LIMIT 500`},
     {id:'geo',query:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`},
   ]);
   const kpis=batchGet(ev,'kpi')[0]||{};
-  kpis.activated=(batchGet(ev,'activated')[0]||{}).activated||0;
+  kpis.activated=+(batchGet(ev,'act')[0]||{}).activated||0;
   RAW={kpis,trend:batchGet(ev,'trend'),breakdown:batchGet(ev,'breakdown')};
   renderOverview();
   renderHeatData(batchGet(ev,'heat'));
   renderGeoData(batchGet(ev,'geo'));
-  // loadOverview resolves here → busy(false) fires → overlay gone
+  // resolves here → busy(false) fires → overlay gone (activated updates ~1-2s later)
 }
 
 async function refreshActive(requery){
@@ -1144,6 +2504,207 @@ function bindFilters(){
 })();
 
 bindNav();bindFilters();bindMobile();refreshActive(true);
+
+// ── Floating Chat (pattern-matched, no AI API needed) ──────────
+(function(){
+const COLORS=['#3b5bdb','#16a34a','#a855f7','#0ea5e9','#d97706','#dc2626','#0f766e','#db2777'];
+const PG_X="user_email NOT LIKE '%@nextraise.ai' AND user_email NOT LIKE '%@creditdharma.in' AND lower(user_email) NOT LIKE '%test%'";
+const PH_X="NOT endsWith(coalesce(person.properties.email,''),'@nextraise.ai') AND NOT endsWith(coalesce(person.properties.email,''),'@creditdharma.in') AND lower(coalesce(person.properties.email,'')) NOT LIKE '%test%'";
+const L30="timestamp>=now()-INTERVAL 30 DAY";
+const RF="created_at>='2026-05-01'";
+
+const INTENTS=[
+  {match:['mrr','monthly recurring revenue','monthly revenue','revenue this month'],title:'MRR — This Month',type:'number',
+   sql:`SELECT round(sum(amount)) AS mrr_inr FROM postgres.payments WHERE status='completed' AND currency='INR' AND ${RF} AND ${PG_X} AND toStartOfMonth(created_at)=toStartOfMonth(now())`,
+   cols:['mrr_inr'],xKey:null,yKeys:['mrr_inr'],insight:'Total INR revenue collected this calendar month.'},
+
+  {match:['total revenue','all time revenue','revenue total','how much revenue','overall revenue'],title:'Total Revenue (All Time)',type:'number',
+   sql:`SELECT round(sum(amount)) AS total_inr FROM postgres.payments WHERE status='completed' AND currency='INR' AND ${RF} AND ${PG_X}`,
+   cols:['total_inr'],xKey:null,yKeys:['total_inr'],insight:'Cumulative INR revenue from all completed payments since May 2026.'},
+
+  {match:['revenue trend','revenue over time','revenue by day','daily revenue','revenue chart'],title:'Revenue — Last 30 Days',type:'line',
+   sql:`SELECT toString(toStartOfDay(created_at)) AS day,round(sum(amount)) AS revenue FROM postgres.payments WHERE status='completed' AND currency='INR' AND ${RF} AND ${PG_X} AND created_at>=now()-INTERVAL 30 DAY GROUP BY day ORDER BY day`,
+   cols:['day','revenue'],xKey:'day',yKeys:['revenue'],insight:'Day-by-day INR revenue over the last 30 days.'},
+
+  {match:['revenue by plan','plan revenue','revenue breakdown','plan breakdown'],title:'Revenue by Plan',type:'bar',
+   sql:`SELECT plan_key,round(sum(amount)) AS revenue FROM postgres.payments WHERE status='completed' AND currency='INR' AND ${RF} AND ${PG_X} GROUP BY plan_key ORDER BY revenue DESC LIMIT 10`,
+   cols:['plan_key','revenue'],xKey:'plan_key',yKeys:['revenue'],insight:'Revenue broken down by subscription plan (INR).'},
+
+  {match:['payers','how many paid','paying customers','number of payers','total payers'],title:'Total Payers',type:'number',
+   sql:`SELECT count(DISTINCT user_id) AS payers FROM postgres.payments WHERE status='completed' AND ${RF} AND ${PG_X}`,
+   cols:['payers'],xKey:null,yKeys:['payers'],insight:'Unique users who have made at least one completed payment.'},
+
+  {match:['active subscribers','active paid','paying users','active subscriptions'],title:'Active Paid Subscribers',type:'number',
+   sql:`SELECT count(DISTINCT s.user_id) AS active FROM postgres.subscriptions s INNER JOIN postgres.users u ON u.id=s.user_id WHERE s.status='active' AND s.plan!='free' AND u.email NOT LIKE '%@nextraise.ai' AND u.email NOT LIKE '%@creditdharma.in' AND lower(u.email) NOT LIKE '%test%'`,
+   cols:['active'],xKey:null,yKeys:['active'],insight:'Current count of active non-free paid subscribers.'},
+
+  {match:['signup trend','signups over time','daily signups','signups per day','signup chart'],title:'Signup Trend — Last 30 Days',type:'line',
+   sql:`SELECT toString(toStartOfDay(timestamp)) AS day,uniq(person_id) AS signups FROM events WHERE event='signup_complete' AND ${L30} AND ${PH_X} GROUP BY day ORDER BY day`,
+   cols:['day','signups'],xKey:'day',yKeys:['signups'],insight:'New unique signups per day over the last 30 days.'},
+
+  {match:['how many signups','total signups','signups this week','signups today','signup count','number of signups'],title:'Signups — Last 7 Days',type:'number',
+   sql:`SELECT uniq(person_id) AS signups FROM events WHERE event='signup_complete' AND timestamp>=now()-INTERVAL 7 DAY AND ${PH_X}`,
+   cols:['signups'],xKey:null,yKeys:['signups'],insight:'Unique users who completed signup in the last 7 days.'},
+
+  {match:['funnel','conversion funnel','l0 funnel','visitors to paid','acquisition funnel'],title:'L0 Funnel — Last 30 Days',type:'bar',pivot:true,
+   sql:`SELECT uniqIf(person_id,event='$pageview') AS Visitors,uniqIf(person_id,event='signup_complete') AS Signups,uniqIf(person_id,event='payment_completed') AS Paid FROM events WHERE ${L30} AND ${PH_X}`,
+   cols:['Visitors','Signups','Paid'],xKey:'stage',yKeys:['value'],insight:'Top-of-funnel: Visitors → Signups → Paid, last 30 days.'},
+
+  {match:['paywall','paywall conversion','paywall to paid','paywall rate'],title:'Paywall → Paid — Last 30 Days',type:'bar',pivot:true,
+   sql:`SELECT uniqIf(person_id,event='paywall_hit') AS Paywall_Hits,uniqIf(person_id,event='payment_completed') AS Paid FROM events WHERE ${L30} AND ${PH_X}`,
+   cols:['Paywall_Hits','Paid'],xKey:'stage',yKeys:['value'],insight:'Users who hit the paywall vs. those who converted to paid, last 30 days.'},
+
+  {match:['referrer','referrals','top referrers','referral leaderboard','who referred'],title:'Top Referrers',type:'table',
+   sql:`SELECT r.name AS name,count(u.id) AS referrals,countIf(u.plan_cache NOT IN ('free','') AND u.plan_cache IS NOT NULL) AS conversions,round(coalesce(sum(CASE WHEN pay.status='completed' AND pay.currency='INR' THEN pay.amount ELSE 0 END),0)) AS revenue_inr FROM postgres.users r INNER JOIN postgres.users u ON u.referred_by_id=r.id LEFT JOIN postgres.payments pay ON pay.user_id=u.id AND pay.status='completed' AND pay.currency='INR' WHERE r.email NOT LIKE '%@nextraise.ai' AND r.email NOT LIKE '%@creditdharma.in' GROUP BY r.id,r.name HAVING count(u.id)>0 ORDER BY referrals DESC LIMIT 10`,
+   cols:['name','referrals','conversions','revenue_inr'],xKey:'name',yKeys:['referrals'],insight:'Top 10 referrers ranked by number of referred users and revenue.'},
+
+  {match:['india','non-india','geo','geography','country split'],title:'India vs Non-India — Last 30 Days',type:'bar',
+   sql:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo,uniqIf(person_id,event='$pageview') AS visitors,uniqIf(person_id,event='signup_complete') AS signups,uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${L30} AND ${PH_X} GROUP BY geo ORDER BY visitors DESC`,
+   cols:['geo','visitors','signups','paid'],xKey:'geo',yKeys:['visitors','signups','paid'],insight:'Visitors, signups, and payments split between India and Non-India, last 30 days.'},
+
+  {match:['retention','returning users','new vs returning','churn','retained'],title:'New vs Returning Logins — Last 30 Days',type:'pie',pivot:true,
+   sql:`SELECT uniqIf(person_id,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='true') AS New_Users,uniqIf(person_id,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='false') AS Returning_Users FROM events WHERE ${L30} AND ${PH_X}`,
+   cols:['New_Users','Returning_Users'],xKey:'stage',yKeys:['value'],insight:'Split between first-time and returning user logins over the last 30 days.'},
+
+  {match:['email','email open','email delivered','email sent','email stats'],title:'Email Stats — Last 30 Days',type:'bar',pivot:true,
+   sql:`SELECT countIf(event='email_sent') AS Sent,countIf(event='email_delivered') AS Delivered,countIf(event='email_opened') AS Opened FROM events WHERE event IN ('email_sent','email_delivered','email_opened') AND ${L30} AND ${PH_X}`,
+   cols:['Sent','Delivered','Opened'],xKey:'stage',yKeys:['value'],insight:'Email delivery funnel: Sent → Delivered → Opened, last 30 days.'},
+
+  {match:['sessions','daily sessions','session count','daily active users','logged in'],title:'Daily Sessions — Last 30 Days',type:'line',
+   sql:`SELECT toString(toStartOfDay(timestamp)) AS day,count(DISTINCT person_id) AS sessions FROM events WHERE event='logged_in_session_start' AND ${L30} AND ${PH_X} GROUP BY day ORDER BY day`,
+   cols:['day','sessions'],xKey:'day',yKeys:['sessions'],insight:'Daily logged-in user sessions over the last 30 days.'},
+
+  {match:['visitors','pageview','page views','traffic','how many visitors','daily visitors'],title:'Daily Visitors — Last 30 Days',type:'line',
+   sql:`SELECT toString(toStartOfDay(timestamp)) AS day,uniq(person_id) AS visitors FROM events WHERE event='$pageview' AND ${L30} AND ${PH_X} GROUP BY day ORDER BY day`,
+   cols:['day','visitors'],xKey:'day',yKeys:['visitors'],insight:'Unique daily visitors over the last 30 days.'},
+
+  {match:['channel','signup by channel','acquisition channel','utm','traffic source'],title:'Signups by Channel — Last 30 Days',type:'bar',
+   sql:`SELECT coalesce(nullIf(person.properties.$initial_utm_source,''),'direct') AS channel,uniq(person_id) AS signups FROM events WHERE event='signup_complete' AND ${L30} AND ${PH_X} GROUP BY channel ORDER BY signups DESC LIMIT 10`,
+   cols:['channel','signups'],xKey:'channel',yKeys:['signups'],insight:'Signup volume broken down by acquisition channel/UTM source, last 30 days.'},
+
+  {match:['conversion rate','overall conversion','full funnel'],title:'Full Funnel — Last 30 Days',type:'bar',pivot:true,
+   sql:`SELECT uniqIf(person_id,event='$pageview') AS Visitors,uniqIf(person_id,event='signup_complete') AS Signups,uniqIf(person_id,event='paywall_hit') AS Paywall,uniqIf(person_id,event='payment_completed') AS Paid FROM events WHERE ${L30} AND ${PH_X}`,
+   cols:['Visitors','Signups','Paywall','Paid'],xKey:'stage',yKeys:['value'],insight:'Full acquisition funnel from visitors to paid, last 30 days.'},
+];
+
+const SUGGESTIONS=['What is my MRR?','Show signup trend','Revenue by plan','Top referrers','India vs Non-India','Paywall conversion'];
+let open=false;
+const chartReg={};
+
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function scrollBot(){const m=document.getElementById('chat-msgs');if(m)setTimeout(()=>m.scrollTop=m.scrollHeight,30);}
+
+function matchIntent(question){
+  const lq=question.toLowerCase();
+  const sorted=[...INTENTS].sort((a,b)=>Math.max(...b.match.map(p=>p.length))-Math.max(...a.match.map(p=>p.length)));
+  return sorted.find(i=>i.match.some(p=>lq.includes(p)))||null;
+}
+
+function pivotResult(cols,rows){
+  const row=Array.isArray(rows[0])?rows[0]:Object.values(rows[0]);
+  return cols.map((c,i)=>[c.replace(/_/g,' '),row[i]]);
+}
+
+async function localChat(question){
+  const intent=matchIntent(question);
+  if(!intent)return{error:"I can answer questions about: MRR, revenue trend, signups, funnel, paywall, referrers, retention, sessions, email stats, geo split, or acquisition channels."};
+  try{
+    const results=await q(intent.sql);
+    let cols=intent.cols,rows=results;
+    if(intent.pivot&&rows&&rows.length>0){rows=pivotResult(intent.cols,rows);cols=['stage','value'];}
+    return{chartType:intent.type,title:intent.title,insight:intent.insight,xKey:intent.xKey,yKeys:intent.pivot?['value']:intent.yKeys,columns:cols,results:rows};
+  }catch(e){return{error:'Query failed: '+e.message};}
+}
+
+function buildChart(cid,data){
+  setTimeout(()=>{
+    const canvas=document.getElementById(cid);if(!canvas)return;
+    const cols=data.columns||[],rows=data.results||[];
+    const xIdx=data.xKey?cols.indexOf(data.xKey):0;
+    const yIdxs=(data.yKeys||[]).map(k=>cols.indexOf(k)).filter(i=>i>=0);
+    if(!yIdxs.length)yIdxs.push(1);
+    const labels=rows.map(r=>String(Array.isArray(r)?r[Math.max(0,xIdx)]:Object.values(r)[0]));
+    const type=data.chartType==='pie'?'pie':data.chartType==='bar'?'bar':'line';
+    let datasets;
+    if(type==='pie'){
+      datasets=[{data:rows.map(r=>Number(Array.isArray(r)?r[yIdxs[0]]:Object.values(r)[yIdxs[0]])||0),backgroundColor:COLORS,borderWidth:1}];
+    }else{
+      datasets=yIdxs.map((yi,i)=>({label:cols[yi]||'',data:rows.map(r=>Number(Array.isArray(r)?r[yi]:Object.values(r)[yi])||0),backgroundColor:COLORS[i%COLORS.length]+(type==='bar'?'bb':'22'),borderColor:COLORS[i%COLORS.length],borderWidth:type==='line'?2:0,pointRadius:type==='line'?3:0,fill:false,tension:.3}));
+    }
+    if(chartReg[cid])chartReg[cid].destroy();
+    chartReg[cid]=new Chart(canvas,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:datasets.length>1||type==='pie',position:'bottom',labels:{font:{size:10},boxWidth:10}}},scales:type==='pie'?{}:{x:{ticks:{font:{size:10},maxRotation:30,maxTicksLimit:10}},y:{ticks:{font:{size:10}}}}}});
+  },60);
+}
+
+function renderResult(el,data){
+  if(data.error){el.innerHTML=`<div class="chat-bubble" style="background:#fee2e2;color:#991b1b">${esc(data.error)}</div>`;scrollBot();return;}
+  let inner=`<div class="chat-bubble">${esc(data.insight)}</div>`;
+  if(data.chartType==='number'){
+    const v=data.results&&data.results[0]?(Array.isArray(data.results[0])?data.results[0][0]:Object.values(data.results[0])[0]):'—';
+    inner+=`<div class="chat-chart"><h5>${esc(data.title)}</h5><div class="chat-number">${esc(String(v??'—'))}</div></div>`;
+  }else if(data.chartType==='table'){
+    const cols=data.columns||[],rows=(data.results||[]).slice(0,20);
+    let t=`<div class="chat-chart" style="overflow-x:auto"><h5>${esc(data.title)}</h5><table class="chat-tbl"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>`;
+    rows.forEach(r=>{const v=Array.isArray(r)?r:Object.values(r);t+=`<tr>${v.map(x=>`<td>${esc(String(x??''))}</td>`).join('')}</tr>`;});
+    t+='</tbody></table></div>';inner+=t;
+  }else{
+    const cid='cc'+Date.now();
+    inner+=`<div class="chat-chart"><h5>${esc(data.title)}</h5><div style="height:180px"><canvas id="${cid}"></canvas></div></div>`;
+    el.innerHTML=inner;buildChart(cid,data);scrollBot();return;
+  }
+  el.innerHTML=inner;scrollBot();
+}
+
+async function ask(question){
+  if(!question.trim())return;
+  document.getElementById('chat-in').value='';
+  document.getElementById('chat-send').disabled=true;
+  const sugs=document.getElementById('chat-sugs');if(sugs)sugs.style.display='none';
+  const um=document.createElement('div');um.className='chat-msg user';
+  um.innerHTML=`<div class="chat-bubble">${esc(question)}</div>`;
+  document.getElementById('chat-msgs').appendChild(um);scrollBot();
+  const lm=document.createElement('div');lm.className='chat-msg ai';
+  lm.innerHTML='<div class="chat-loading"><span></span><span></span><span></span></div>';
+  document.getElementById('chat-msgs').appendChild(lm);scrollBot();
+  const data=await localChat(question);
+  renderResult(lm,data);
+  document.getElementById('chat-send').disabled=false;
+  document.getElementById('chat-in').focus();
+}
+
+window.toggleChat=function(){
+  open=!open;
+  document.getElementById('chat-panel').classList.toggle('hidden',!open);
+  if(open)document.getElementById('chat-in').focus();
+};
+window.sendChat=function(){ask(document.getElementById('chat-in').value.trim());};
+window.suggestChat=function(t){ask(t);};
+
+document.body.insertAdjacentHTML('beforeend',`
+<button class="chat-fab" onclick="toggleChat()" title="Ask Analytics">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+<div class="chat-panel hidden" id="chat-panel">
+  <div class="chat-hdr">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <h4>Ask Analytics</h4>
+    <small>Live data · instant answers</small>
+    <button class="close-btn" onclick="toggleChat()">×</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="chat-msg ai">
+      <div class="chat-bubble">Hi! Ask me about your metrics — signups, revenue, funnel, referrers, retention, geo split, and more.</div>
+    </div>
+    <div id="chat-sugs" class="chat-sugs">
+      ${SUGGESTIONS.map(s=>`<button class="chat-sug" onclick="suggestChat('${s.replace(/'/g,"\\'")}')">${esc(s)}</button>`).join('')}
+    </div>
+  </div>
+  <div class="chat-foot">
+    <input id="chat-in" placeholder="e.g. What is my MRR?" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}">
+    <button id="chat-send" onclick="sendChat()">Send</button>
+  </div>
+</div>`);
+})();
 </script>
 </body>
 </html>
