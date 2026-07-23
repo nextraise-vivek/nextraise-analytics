@@ -429,7 +429,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
       <div class="grid2b">
         <div class="card">
           <h3>L0 Funnel
-            <span class="tip" data-tip="Visitors = unique persons with $pageview. Signups = signup_complete. Activated = signed up AND viewed a result page (/comprehensive-analysis/results or /tailor). Paid = payment_completed event (PostHog). Paid (DB) = postgres.payments WHERE status='completed' — source of truth.">i</span>
+            <span class="tip" data-tip="Visitors = unique persons with $pageview. Signups = signup_complete. Activated = resume_upload_success event (user successfully uploaded and processed a resume). Paid = payment_completed event (PostHog). Paid (DB) = postgres.payments WHERE status='completed' — source of truth.">i</span>
             <span class="sub" id="funnel-sub"></span>
           </h3>
           <div class="funnel" id="funnel"></div>
@@ -717,7 +717,7 @@ const CHEXPR_F=`multiIf((${CHMED}='online_ads' AND ${CHSRC}='google_ads') OR ${C
 const CHEXPR_G=CHEXPR_F.replace(/person\.properties\.first_touch_medium/g,"any(person.properties.first_touch_medium)").replace(/person\.properties\.first_touch_source/g,"any(person.properties.first_touch_source)").replace(/person\.properties\.\$initial_utm_medium/g,"any(person.properties.$initial_utm_medium)").replace(/person\.properties\.\$initial_utm_source/g,"any(person.properties.$initial_utm_source)");
 
 const DIM_EXPR={
-  country:"multiIf(person.properties.$geoip_country_code='IN','India', person.properties.$geoip_country_code IN ('US','CA'),'US/CA', coalesce(person.properties.$geoip_country_code,'')='','Unknown','RoW')",
+  country:"multiIf(person.properties.$initial_geoip_country_code='IN','India', person.properties.$initial_geoip_country_code IN ('US','CA'),'US/CA', coalesce(person.properties.$initial_geoip_country_code,'')='','Unknown','RoW')",
   device:"multiIf(properties.$device_type='Desktop','Web', properties.$device_type='Mobile','M-Web', properties.$device_type='Tablet','Tablet', 'Unknown')",
   flow:"multiIf(person.properties.first_touch_landing='/','Main', person.properties.first_touch_landing LIKE '/lp/%','SEM', coalesce(person.properties.first_touch_landing,'')='','Direct','Other')",
   channel:CHEXPR_F,
@@ -812,10 +812,10 @@ function timeWFor(f){
 function dimW(){
   const w=[];
   if(state.country!=='All'){const c=state.country;
-    if(c==='India')w.push("person.properties.$geoip_country_code='IN'");
-    else if(c==='US/CA')w.push("person.properties.$geoip_country_code IN ('US','CA')");
-    else if(c==='Unknown')w.push("coalesce(person.properties.$geoip_country_code,'')=''");
-    else w.push("person.properties.$geoip_country_code NOT IN ('IN','US','CA','')");}
+    if(c==='India')w.push("person.properties.$initial_geoip_country_code='IN'");
+    else if(c==='US/CA')w.push("person.properties.$initial_geoip_country_code IN ('US','CA')");
+    else if(c==='Unknown')w.push("coalesce(person.properties.$initial_geoip_country_code,'')=''");
+    else w.push("person.properties.$initial_geoip_country_code NOT IN ('IN','US','CA','')");}
   if(state.device!=='All'){const m={'Web':'Desktop','M-Web':'Mobile','Tablet':'Tablet'}[state.device];
     w.push(m?`properties.$device_type='${m}'`:"coalesce(properties.$device_type,'')=''");}
   if(state.flow!=='All'){const f=state.flow;
@@ -876,7 +876,7 @@ async function errorsInto(elId,evList,extra){
 }
 
 /* ---------- OVERVIEW — three focused queries instead of one massive CTE ---------- */
-const VAL_COND="event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%' OR properties.$pathname LIKE '/jobs%')";
+const VAL_COND="event='resume_upload_success'";
 
 function kpiSQL(){
   return `SELECT uniqIf(person_id,event='$pageview') AS visitors, uniqIf(person_id,event='signup_complete') AS signups, 0 AS activated, uniqIf(person_id,event='payment_completed') AS paid, uniqIf(person_id,event='user_signed_in' AND properties.completed='true' AND properties.is_new_user='false') AS returning FROM events WHERE ${baseWhere()}`;
@@ -894,9 +894,9 @@ function breakdownSQL(){
 }
 function mainSQL(){
   const bucket=state.gran==='hour'?"toStartOfHour(min(timestamp))":"toDate(min(timestamp))";
-  const VAL="event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')";
+  const VAL="event='resume_upload_success'";
   return `WITH pp AS (SELECT person_id, ${bucket} AS bucket,
-    multiIf(any(person.properties.$geoip_country_code)='IN','India', any(person.properties.$geoip_country_code) IN ('US','CA'),'US/CA', coalesce(any(person.properties.$geoip_country_code),'')='','Unknown','RoW') AS country,
+    multiIf(any(person.properties.$initial_geoip_country_code)='IN','India', any(person.properties.$initial_geoip_country_code) IN ('US','CA'),'US/CA', coalesce(any(person.properties.$initial_geoip_country_code),'')='','Unknown','RoW') AS country,
     coalesce(nullIf(argMaxIf(properties.$device_type,timestamp,properties.$device_type!=''),''),'Unknown') AS device,
     multiIf(any(person.properties.first_touch_landing)='/','Main', any(person.properties.first_touch_landing) LIKE '/lp/%','SEM', coalesce(any(person.properties.first_touch_landing),'')='','Direct','Other') AS flow,
     ${CHEXPR_G} AS channel,
@@ -957,7 +957,7 @@ async function loadGeoSplit(){
   const el=document.querySelector('#geo-split tbody');if(!el)return;
   el.innerHTML='<tr><td class="loadingcard">Loading…</td></tr>';
   try{
-    const rows=await q(`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`);
+    const rows=await q(`SELECT multiIf(person.properties.$initial_geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`);
     renderGeoData(rows);
   }catch(e){el.innerHTML=`<tr><td class="cardErr">⚠ ${e.message}</td></tr>`;}
 }
@@ -973,7 +973,7 @@ function renderOverview(){
     {k:'returning',n:'Returning',c:'--ret'},
   ];
   document.getElementById('kpis').innerHTML=st.map(s=>`<div class="kpi"><div class="t"><span class="dot" style="background:var(${s.c})"></span>${s.n}</div><div class="v">${NUM(t[s.k])}</div><div class="c">${s.cv?PCT(t[s.cv[0]],t[s.cv[1]])+' of '+s.cv[1]:(s.k==='returning'?'returning logins':'in range')}</div></div>`).join('');
-  const ftips={visitors:'Unique persons with a $pageview in range.',signups:'New accounts: signup_complete event.',activated:'Strict intersection: users who signed up AND viewed at least one value page in this window. Value pages: /comprehensive-analysis/results*, /tailor/*, /jobs*. Always ≤ signups.',paid:'payment_completed event fires on successful payment. See Revenue card below for postgres truth.'};
+  const ftips={visitors:'Unique persons with a $pageview in range.',signups:'New accounts: signup_complete event.',activated:'Users with a resume_upload_success event in this window — resume successfully uploaded and processed.',paid:'payment_completed event fires on successful payment. See Revenue card below for postgres truth.'};
   const fst=[['visitors','Visitors','--vis'],['signups','Signups','--sig'],['activated','Activated','--act'],['paid','Paid','--paid']];
   const max=Math.max(+t.visitors||0,1);
   document.getElementById('funnel').innerHTML=fst.map((s,i)=>{const val=+t[s[0]]||0,w=Math.max(3,100*val/max),prev=i>0?+t[fst[i-1][0]]||0:null;
@@ -1047,7 +1047,7 @@ function rangeLabel(){
 }
 
 /* ---------- L1 DRILL TABS ---------- */
-const RV="event='$pageview' AND (properties.$pathname LIKE '/comprehensive-analysis/results%' OR properties.$pathname LIKE '/tailor/%')";
+const RV="event='resume_upload_success'";
 
 async function loadAcquisition(){
   await tableInto('acq-flow',"multiIf(person.properties.first_touch_landing='/','Main', person.properties.first_touch_landing LIKE '/lp/%','SEM', coalesce(person.properties.first_touch_landing,'')='','Direct','Other')",
@@ -1071,7 +1071,7 @@ async function loadActivation(){
       {label:'Signed up',cond:"event='signup_complete'",color:'var(--sig)',tip:'New accounts (signup_complete). Funnel base.'},
       {label:'Onboarding done',cond:"event IN ('onboarding_complete','onboarding_complete_server')",color:'var(--act)',tip:'Finished onboarding. SEM flow auto-completes this.'},
       {label:'Resume uploaded',cond:"event='resume_upload_success'",color:'#6366f1',tip:'Successfully uploaded a resume (resume_upload_success).'},
-      {label:'Saw a result',cond:RV,color:'var(--paid)',tip:'Viewed ATS (/comprehensive-analysis/results) or Job-Match/Tailor (/tailor). = "got value".'}
+      {label:'Resume uploaded',cond:RV,color:'var(--paid)',tip:'resume_upload_success — resume successfully uploaded and processed. = "activated".'}
     ],[],{cumulative:true}),
     funnelInto('act-upload',[
       {label:'Resume selected',cond:"event='resume_upload'",color:'var(--vis)',tip:'Resume file chosen for upload (resume_upload).'},
@@ -1102,7 +1102,7 @@ async function loadMonetization(){
     {label:'Checkout (order created)',cond:"event='payment_order_created'",color:'var(--act)',tip:'Created a payment order / reached checkout (payment_order_created). NOT yet paid.'},
     {label:'Paid',cond:"event='payment_completed'",color:'var(--paid)',tip:'payment_completed event fires on successful payment.'}
   ]);
-  await tableInto('mon-geo',"multiIf(person.properties.$geoip_country_code='IN','India','Non-India')",[{label:'Paywall',cond:"event='paywall_hit'"},{label:'Pricing',cond:"event='pricing_page_view'"},{label:'Paid',cond:"event='payment_completed'"}],[],{label:'Geo',tip:'India vs Non-India. India payment friction (Dodo/RBI) = key lever. Note: geoip reflects AWS server IPs for server-side events — use with caution.',rate:{label:'Paywall→Paid',num:2,den:0}});
+  await tableInto('mon-geo',"multiIf(person.properties.$initial_geoip_country_code='IN','India','Non-India')",[{label:'Paywall',cond:"event='paywall_hit'"},{label:'Pricing',cond:"event='pricing_page_view'"},{label:'Paid',cond:"event='payment_completed'"}],[],{label:'Geo',tip:'India vs Non-India. India payment friction (Dodo/RBI) = key lever. Note: geoip reflects AWS server IPs for server-side events — use with caution.',rate:{label:'Paywall→Paid',num:2,den:0}});
   await tableInto('mon-feat',"coalesce(nullIf(properties.feature_blocked,''),'(none)')",[{label:'Paywall hits',cond:"event='paywall_hit'"}],["event='paywall_hit'"],{label:'Feature blocked',tip:'Which feature triggered the paywall (paywall_hit.feature_blocked).'});
   await tableInto('mon-page',"coalesce(nullIf(properties.page_path,''),'(none)')",[{label:'Paywall hits',cond:"event='paywall_hit'"}],["event='paywall_hit'"],{label:'Page',tip:'Page the paywall fired on (paywall_hit.page_path).'});
   // Postgres plans table
@@ -2810,7 +2810,7 @@ async function loadOverview(){
     {id:'trend',query:trendSQL()},
     {id:'breakdown',query:breakdownSQL()},
     {id:'heat',query:`SELECT toDayOfWeek(timestamp) AS dow, toHour(timestamp) AS hr, count(DISTINCT person_id) AS c FROM events WHERE event='${state.heatMetric}' AND ${baseWhere()} GROUP BY dow,hr ORDER BY dow,hr LIMIT 500`},
-    {id:'geo',query:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`},
+    {id:'geo',query:`SELECT multiIf(person.properties.$initial_geoip_country_code='IN','India','Non-India') AS geo, uniqIf(person_id,event='$pageview') AS vis, uniqIf(person_id,event='signup_complete') AS sig, uniqIf(person_id,event='paywall_hit') AS pw, uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${baseWhere()} GROUP BY geo ORDER BY vis DESC`},
   ]).then(slow=>{
     RAW.trend=batchGet(slow,'trend');
     RAW.breakdown=batchGet(slow,'breakdown');
@@ -2955,7 +2955,7 @@ const INTENTS=[
    cols:['name','referrals','conversions','revenue_inr'],xKey:'name',yKeys:['referrals'],insight:'Top 10 referrers ranked by number of referred users and revenue.'},
 
   {match:['india','non-india','geo','geography','country split'],title:'India vs Non-India — Last 30 Days',type:'bar',
-   sql:`SELECT multiIf(person.properties.$geoip_country_code='IN','India','Non-India') AS geo,uniqIf(person_id,event='$pageview') AS visitors,uniqIf(person_id,event='signup_complete') AS signups,uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${L30} AND ${PH_X} GROUP BY geo ORDER BY visitors DESC`,
+   sql:`SELECT multiIf(person.properties.$initial_geoip_country_code='IN','India','Non-India') AS geo,uniqIf(person_id,event='$pageview') AS visitors,uniqIf(person_id,event='signup_complete') AS signups,uniqIf(person_id,event='payment_completed') AS paid FROM events WHERE ${L30} AND ${PH_X} GROUP BY geo ORDER BY visitors DESC`,
    cols:['geo','visitors','signups','paid'],xKey:'geo',yKeys:['visitors','signups','paid'],insight:'Visitors, signups, and payments split between India and Non-India, last 30 days.'},
 
   {match:['retention','returning users','new vs returning','churn','retained'],title:'New vs Returning Logins — Last 30 Days',type:'pie',pivot:true,
