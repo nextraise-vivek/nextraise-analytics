@@ -1,6 +1,5 @@
-export const config = { runtime: 'edge' };
-
-import { get as rGet, set as rSet } from './_redis.js';
+// Node.js runtime — uses MongoDB for server-side query caching
+import { getDb, COLL } from './_mongodb.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -8,14 +7,30 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const CACHE_TTL = 300; // 5 minutes
+const CACHE_TTL_SEC = 300; // 5 minutes
 
 function hashQuery(s) {
   let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
-  }
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
   return h.toString(36);
+}
+
+async function getCache(db, key) {
+  try {
+    const doc = await db.collection(COLL.CACHE).findOne({ _id: key, expiresAt: { $gt: new Date() } });
+    return doc?.result ?? null;
+  } catch { return null; }
+}
+
+async function setCache(db, key, result) {
+  try {
+    const expiresAt = new Date(Date.now() + CACHE_TTL_SEC * 1000);
+    await db.collection(COLL.CACHE).updateOne(
+      { _id: key },
+      { $set: { result, expiresAt } },
+      { upsert: true }
+    );
+  } catch {}
 }
 
 async function runQuery(apiKey, query) {
@@ -28,12 +43,13 @@ async function runQuery(apiKey, query) {
   return { columns: j.columns, results: j.results, error: j.detail || null };
 }
 
-async function cachedQuery(apiKey, query) {
-  const cacheKey = 'qcache::' + hashQuery(query.replace(/\s+/g, ' ').trim());
-  const cached = await rGet(cacheKey);
+async function cachedQuery(db, apiKey, query) {
+  const clean = query.replace(/\s+/g, ' ').trim();
+  const key = 'q::' + hashQuery(clean);
+  const cached = await getCache(db, key);
   if (cached) return { ...cached, _cached: true };
-  const result = await runQuery(apiKey, query);
-  if (!result.error) rSet(cacheKey, result, CACHE_TTL); // fire-and-forget
+  const result = await runQuery(apiKey, clean);
+  if (!result.error) setCache(db, key, result); // fire-and-forget
   return result;
 }
 
@@ -44,6 +60,10 @@ export default async function handler(req) {
   const apiKey = process.env.POSTHOG_API_KEY;
   if (!apiKey) return new Response(JSON.stringify({ error: 'POSTHOG_API_KEY not configured' }), { status: 500, headers: CORS });
 
+  // Get DB (non-blocking — if unavailable, queries still run uncached)
+  let db = null;
+  try { db = await getDb(); } catch {}
+
   const body = await req.json();
 
   // Batch mode: [{id, query}, ...]
@@ -51,16 +71,12 @@ export default async function handler(req) {
     const results = await Promise.all(
       body.map(async ({ id, query }) => {
         try {
-          const r = await cachedQuery(apiKey, query);
+          const r = db ? await cachedQuery(db, apiKey, query) : await runQuery(apiKey, query);
           return { id, ...r };
-        } catch (e) {
-          return { id, error: e.message };
-        }
+        } catch (e) { return { id, error: e.message }; }
       })
     );
-    return new Response(JSON.stringify(results), {
-      headers: { 'Content-Type': 'application/json', ...CORS },
-    });
+    return new Response(JSON.stringify(results), { headers: { 'Content-Type': 'application/json', ...CORS } });
   }
 
   // Single mode: {query}
@@ -68,10 +84,8 @@ export default async function handler(req) {
   if (!query) return new Response(JSON.stringify({ error: 'Missing query' }), { status: 400, headers: CORS });
 
   try {
-    const r = await cachedQuery(apiKey, query);
-    if (r.error && !r.results) {
-      return new Response(JSON.stringify({ error: r.error }), { status: 400, headers: { 'Content-Type': 'application/json', ...CORS } });
-    }
+    const r = db ? await cachedQuery(db, apiKey, query) : await runQuery(apiKey, query);
+    if (r.error && !r.results) return new Response(JSON.stringify({ error: r.error }), { status: 400, headers: { 'Content-Type': 'application/json', ...CORS } });
     return new Response(JSON.stringify(r), { headers: { 'Content-Type': 'application/json', ...CORS } });
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } });
