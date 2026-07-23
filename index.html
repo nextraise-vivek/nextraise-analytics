@@ -1622,6 +1622,7 @@ function renderInfluencers(){
                 <span class="pay-out-amt" id="po-${rid}">₹${NUM(totalPayout)}</span>
               </div>
               <button class="social-save-btn" id="pay-save-${rid}">Save</button>
+              <button id="pay-edit-${rid}" style="display:none;padding:5px 14px;font-size:11px;font-weight:700;background:var(--panel);color:var(--brand);border:1.5px solid var(--brand);border-radius:6px;cursor:pointer">✎ Edit</button>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
               <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap">Discount Code</span>
@@ -1688,7 +1689,7 @@ function renderInfluencers(){
               </tr>`;
             }).join('')}</tbody>
           </table>`;
-        // Wire up multi-type payment calculator
+        // Wire up multi-type payment calculator with lock/edit flow
         (()=>{
           const TYPES=['commission','performance','fixed'];
           const getCurTypes=()=>{
@@ -1704,6 +1705,21 @@ function renderInfluencers(){
             const po=document.getElementById(`po-${rid}`);
             if(po)po.textContent='₹'+NUM(calcMultiPay(getCurTypes()));
           };
+          const setLocked=(locked)=>{
+            TYPES.forEach(k=>{
+              const ck=document.getElementById(`pck-${k}-${rid}`);
+              const inp=document.getElementById(`pr-${k}-${rid}`);
+              if(ck){ck.disabled=locked;ck.style.opacity=locked?'0.6':'1';ck.style.cursor=locked?'not-allowed':'pointer';}
+              if(inp){inp.disabled=locked;inp.style.opacity=locked?'0.6':'1';}
+            });
+            const dc=document.getElementById(`dc-${rid}`);
+            if(dc){dc.disabled=locked;dc.style.opacity=locked?'0.6':'1';}
+            const saveBtn=document.getElementById(`pay-save-${rid}`);
+            const editBtn=document.getElementById(`pay-edit-${rid}`);
+            if(saveBtn)saveBtn.style.display=locked?'none':'inline-flex';
+            if(editBtn)editBtn.style.display=locked?'inline-flex':'none';
+          };
+          // Bind checkbox/input interactions
           TYPES.forEach(k=>{
             const ck=document.getElementById(`pck-${k}-${rid}`);
             const inp=document.getElementById(`pr-${k}-${rid}`);
@@ -1719,14 +1735,20 @@ function renderInfluencers(){
             }
             if(inp)inp.addEventListener('input',refreshPayout);
           });
-          // Save button
+          // Save button → lock
           document.getElementById(`pay-save-${rid}`)?.addEventListener('click',()=>{
             const types=getCurTypes();
             const code=(document.getElementById(`dc-${rid}`)?.value||'').trim();
             saveInfPay(rid,{types,code});
-            const btn=document.getElementById(`pay-save-${rid}`);
-            if(btn){btn.textContent='Saved ✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='Save';btn.style.background='';},1500);}
+            setLocked(true);
           });
+          // Edit button → unlock
+          document.getElementById(`pay-edit-${rid}`)?.addEventListener('click',()=>{
+            setLocked(false);
+          });
+          // Start locked if settings already saved, unlocked if fresh
+          const hasSaved=Object.values(_rawPay.types||{}).some(x=>x.enabled)||(_rawPay.type&&_rawPay.rate);
+          if(hasSaved)setLocked(true);
         })();
         // Wire up Record Payment button
         document.getElementById(`ph-add-${rid}`)?.addEventListener('click',()=>{
