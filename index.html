@@ -386,6 +386,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
 .pu-badge-monthly{background:var(--brand)}
 .pu-badge-3month{background:#16a34a}
 .pu-badge-5month{background:#7c3aed}
+.pu-badge-basic{background:#64748b}
 .pu-badge-other{background:var(--muted)}
 .pu-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600}
 .pu-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
@@ -501,7 +502,7 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
             <span class="tip" data-tip="Source of truth: postgres.payments WHERE status='completed'. Amounts in INR and USD. Active Pro = subscriptions with status='active' right now.">i</span>
             <span class="sub" id="rev-sub"></span>
           </h3>
-          <div id="rev-grid" class="kpis" style="grid-template-columns:repeat(3,1fr);margin:0"></div>
+          <div id="rev-grid" class="kpis" style="grid-template-columns:repeat(5,1fr);margin:0"></div>
         </div>
         <div class="card">
           <h3>India vs Non-India
@@ -966,7 +967,7 @@ async function funnelInto(elId,steps,extra,opts){
     el.innerHTML=steps.map((s,i)=>{const v=vals[i],prev=i>0?vals[i-1]:null,w=Math.max(3,100*v/max);
       const conv=prev!=null?PCT(v,prev):'';const drop=prev!=null&&prev>0?`▼ ${(100-100*v/prev).toFixed(1)}% (${NUM(prev-v)} lost)`:'';
       const tip=s.tip?` data-tip="${s.tip.replace(/"/g,'&quot;')}"`:'';
-      return `<div class="fstep"><div class="lab"><span class="nm"${tip}>${s.label}${s.tip?' <span class="tip">i</span>':''}</span><span class="dp">${conv}</span></div><div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:${s.color||'var(--sig)'}">${NUM(v)}</div></div>${drop?`<div class="drop">${drop}</div>`:''}</div>`;}).join('');
+      return `<div class="fstep"><div class="lab"><span class="nm">${s.label}${s.tip?` <span class="tip"${tip}>i</span>`:''}</span><span class="dp">${conv}</span></div><div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:${s.color||'var(--sig)'}">${NUM(v)}</div></div>${drop?`<div class="drop">${drop}</div>`:''}</div>`;}).join('');
   }catch(e){el.innerHTML='<div class="cardErr">⚠ '+e.message+'</div>';}
 }
 async function tableInto(elId,dimExpr,metrics,extra,opts){
@@ -1191,8 +1192,7 @@ async function loadActivation(){
     funnelInto('act-funnel',[
       {label:'Signed up',cond:"event='signup_complete'",color:'var(--sig)',tip:'New accounts (signup_complete). Funnel base.'},
       {label:'Onboarding done',cond:"event IN ('onboarding_complete','onboarding_complete_server')",color:'var(--act)',tip:'Finished onboarding. SEM flow auto-completes this.'},
-      {label:'Resume uploaded',cond:"event='resume_upload_success'",color:'#6366f1',tip:'Successfully uploaded a resume (resume_upload_success).'},
-      {label:'Resume uploaded',cond:RV,color:'var(--paid)',tip:'resume_upload_success — resume successfully uploaded and processed. = "activated".'}
+      {label:'Resume uploaded',cond:RV,color:'var(--paid)',tip:'resume_upload_success — resume successfully uploaded and processed. This is the "Activated" milestone.'}
     ],[],{cumulative:true}),
     funnelInto('act-upload',[
       {label:'Resume selected',cond:"event='resume_upload'",color:'var(--vis)',tip:'Resume file chosen for upload (resume_upload).'},
@@ -2978,9 +2978,9 @@ function renderProUsers(){
   ];
   document.getElementById('pu-kpis').innerHTML=kpiDefs.map(k=>`
     <div class="kpi">
-      <div class="kpi-label">${h(k.label)}</div>
-      <div class="kpi-val" style="${k.cls?`color:var(${k.cls})`:''};">${k.val}</div>
-      <div class="kpi-sub">${h(k.sub)}</div>
+      <div class="t">${h(k.label)}</div>
+      <div class="v" style="${k.cls?`color:var(${k.cls})`:''};">${k.val}</div>
+      <div class="c">${h(k.sub)}</div>
     </div>`).join('');
   const tbody=document.getElementById('pu-tbody');
   if(!rows.length){
@@ -3007,8 +3007,8 @@ function renderProUsers(){
     }
     const expires=r.ends?r.ends.slice(0,10):'—';
     const paidOn=r.lastPaid?r.lastPaid.slice(0,10):'—';
-    const phoneHtml=r.phone?`<span style="font-weight:600">${h(r.phone)}</span> <button class="pu-copy-btn" onclick="copyText('${r.phone.replace(/'/g,"\\'")}',this)" title="Copy">⎘</button>`:`<span class="no-phone" style="color:var(--muted);font-size:11px">—</span>`;
-    const emailCopy=`<button class="pu-copy-btn" onclick="copyText('${r.email.replace(/'/g,"\\'")}',this)" title="Copy email">⎘</button>`;
+    const phoneHtml=r.phone?`<span style="font-weight:600">${h(r.phone)}</span> <button class="pu-copy-btn" data-copy="${h(r.phone)}" title="Copy">⎘</button>`:`<span class="no-phone" style="color:var(--muted);font-size:11px">—</span>`;
+    const emailCopy=`<button class="pu-copy-btn" data-copy="${h(r.email)}" title="Copy email">⎘</button>`;
     return `<tr data-idx="${i}">
       <td class="col-num" style="padding-left:14px">${i+1}</td>
       <td>
@@ -3064,8 +3064,8 @@ async function loadProUsers(){
     });
     // Row click → modal
     document.getElementById('pu-tbody').addEventListener('click',e=>{
-      const btn=e.target.closest('.pu-copy-btn');
-      if(btn)return; // handled by copyText
+      const btn=e.target.closest('.pu-copy-btn[data-copy]');
+      if(btn){copyText(btn.dataset.copy,btn);return;}
       const tr=e.target.closest('tr[data-idx]');
       if(!tr)return;
       const r=puFilteredData()[+tr.dataset.idx];
@@ -3085,9 +3085,10 @@ async function loadProUsers(){
       const av=document.getElementById('pu-md-avatar');
       av.textContent=ini; av.style.background=col;
       document.getElementById('pu-md-name').textContent=r.name||'—';
-      document.getElementById('pu-md-email').textContent=r.email||'';
+      const mdEmail=document.getElementById('pu-md-email');
+      mdEmail.innerHTML=`${h(r.email||'')} <button class="pu-copy-btn" data-copy="${h(r.email||'')}" title="Copy email">⎘</button>`;
       const fields=[
-        {label:'Phone',val:r.phone?`${r.phone} <button class="pu-copy-btn" onclick="copyText('${r.phone.replace(/'/g,"\\'")}',this)" title="Copy">⎘</button>`:'<span style="color:var(--muted)">—</span>'},
+        {label:'Phone',val:r.phone?`${h(r.phone)} <button class="pu-copy-btn" data-copy="${h(r.phone)}" title="Copy">⎘</button>`:'<span style="color:var(--muted)">—</span>'},
         {label:'Plan',val:`<span class="pu-badge ${bdgCls}">${h(lbl)}</span>`},
         {label:'Status',val:isActive?'Active':'Expired'},
         {label:'Amount Paid',val:amtStr},
@@ -3107,6 +3108,8 @@ async function loadProUsers(){
       document.getElementById('pu-modal').style.display='none';
     });
     document.getElementById('pu-modal').addEventListener('click',e=>{
+      const btn=e.target.closest('.pu-copy-btn[data-copy]');
+      if(btn){copyText(btn.dataset.copy,btn);return;}
       if(e.target===document.getElementById('pu-modal')) document.getElementById('pu-modal').style.display='none';
     });
     // Export CSV
