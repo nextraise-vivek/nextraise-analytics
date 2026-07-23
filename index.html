@@ -910,8 +910,15 @@ function mainSQL(){
 }
 
 /* ---------- Postgres revenue query (truth source) ---------- */
-let USD_INR=86; // fallback; refreshed at load from open.er-api.com
-(async()=>{try{const r=await fetch('https://open.er-api.com/v6/latest/USD');const j=await r.json();if(j.rates&&j.rates.INR)USD_INR=Math.round(j.rates.INR*100)/100;}catch(e){}})();
+let USD_INR=97; // fallback; refreshed at load
+(async()=>{
+  const apis=[
+    async()=>{const r=await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');const j=await r.json();return Math.round(j.usd.inr*100)/100;},
+    async()=>{const r=await fetch('https://latest.currency-api.pages.dev/v1/currencies/usd.json');const j=await r.json();return Math.round(j.usd.inr*100)/100;},
+    async()=>{const r=await fetch('https://open.er-api.com/v6/latest/USD');const j=await r.json();return Math.round(j.rates.INR*100)/100;},
+  ];
+  for(const fn of apis){try{const v=await fn();if(v>50&&v<200){USD_INR=v;break;}}catch(e){}}
+})();
 function renderRevenueTilesData(rev,active){
   const el=document.getElementById('rev-grid');
   if(!rev){el.innerHTML='<div class="cardErr">⚠ Postgres unavailable</div>';return;}
