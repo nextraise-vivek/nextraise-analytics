@@ -1,7 +1,7 @@
 // Node.js runtime — MongoDB requires TCP
 import { getDb, COLL } from './_mongodb.js';
 
-const CACHE_TTL_SEC = 300;
+const CACHE_TTL_SEC = 1800; // 30 min
 
 function hashQuery(s) {
   let h = 2166136261;

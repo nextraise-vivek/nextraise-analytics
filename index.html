@@ -340,6 +340,14 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
 .chat-sugs{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 4px}
 .chat-sug{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--ink);transition:background .1s}
 .chat-sug:hover{background:var(--chip)}
+/* --- Tooltips --- */
+[data-tooltip]{position:relative}
+[data-tooltip]::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1a1d2e;color:#f0f2ff;font-size:11px;line-height:1.45;padding:6px 10px;border-radius:7px;white-space:normal;max-width:200px;text-align:center;pointer-events:none;opacity:0;transition:opacity .15s;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.3);width:max-content}
+[data-tooltip]::before{content:'';position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a1d2e;pointer-events:none;opacity:0;transition:opacity .15s;z-index:9999}
+[data-tooltip]:hover::after,[data-tooltip]:hover::before{opacity:1}
+/* nav tooltips appear to the right */
+.nav a[data-tooltip]::after{left:calc(100% + 10px);bottom:auto;top:50%;transform:translateY(-50%)}
+.nav a[data-tooltip]::before{left:calc(100% + 4px);bottom:auto;top:50%;transform:translateY(-50%) rotate(-90deg)}
 /* --- Pro Users --- */
 .pu-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .pu-plan-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:14px}
@@ -396,21 +404,21 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
   <nav class="nav">
     <div class="brand"><img class="brand-logo" src="https://nextraise.ai/images/nextraise-logo.png" alt="NextRaise"><div>NextRaise<small>Growth Analytics · Live</small></div></div>
     <div class="nav-section">L0 Overview</div>
-    <a data-tab="overview" class="on"><svg class="nav-ico" viewBox="0 0 20 20"><rect x="2" y="11" width="4" height="7" rx="1" fill="currentColor"/><rect x="8" y="7" width="4" height="11" rx="1" fill="currentColor"/><rect x="14" y="3" width="4" height="15" rx="1" fill="currentColor"/></svg> Overview</a>
+    <a data-tab="overview" class="on" data-tooltip="L0 funnel · Revenue · Country breakdown"><svg class="nav-ico" viewBox="0 0 20 20"><rect x="2" y="11" width="4" height="7" rx="1" fill="currentColor"/><rect x="8" y="7" width="4" height="11" rx="1" fill="currentColor"/><rect x="14" y="3" width="4" height="15" rx="1" fill="currentColor"/></svg> Overview</a>
     <div class="nav-section">L1 Funnels</div>
-    <a data-tab="acquisition"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h14l-5 7v6l-4-2V10z"/></svg> Acquisition</a>
-    <a data-tab="activation"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L4 12h6l-1 6 7-10h-6z"/></svg> Activation</a>
-    <a data-tab="monetization"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16"/><path d="M5.5 13h3"/></svg> Monetization</a>
-    <a data-tab="retention"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 5A7.5 7.5 0 104 15.5"/><path d="M4 11v5h5"/></svg> Retention</a>
+    <a data-tab="acquisition" data-tooltip="Where users come from — channels, UTMs, referrers"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h14l-5 7v6l-4-2V10z"/></svg> Acquisition</a>
+    <a data-tab="activation" data-tooltip="Users who uploaded a resume after signing up"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L4 12h6l-1 6 7-10h-6z"/></svg> Activation</a>
+    <a data-tab="monetization" data-tooltip="Subscription revenue, plan breakdown &amp; payer cohorts"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="11" rx="2"/><path d="M2 9h16"/><path d="M5.5 13h3"/></svg> Monetization</a>
+    <a data-tab="retention" data-tooltip="How many users return week over week"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 5A7.5 7.5 0 104 15.5"/><path d="M4 11v5h5"/></svg> Retention</a>
     <div class="nav-section">Growth</div>
-    <a data-tab="lifecycle"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="12" rx="1.5"/><path d="M2 7l8 5 8-5"/></svg> Lifecycle</a>
-    <a data-tab="email"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="9" rx="1.5"/><path d="M2 7.5l6 3.5 6-3.5"/><rect x="15" y="9" width="2.5" height="5" rx=".5" fill="currentColor" stroke="none"/><rect x="13" y="7" width="2" height="7" rx=".5" fill="currentColor" stroke="none"/></svg> Emails</a>
-    <a data-tab="referrals"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 11.5a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1.1 1.1"/><path d="M11.5 8.5a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1.1-1.1"/></svg> Referrals</a>
-    <a data-tab="influencers"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="3"/><path d="M1 18a6 6 0 0112 0"/><path d="M14.5 5a2.5 2.5 0 010 5M18 18a5.5 5.5 0 00-5.5-5"/></svg> Influencers</a>
-    <a data-tab="prousers"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M14 4l1.5 1.5L18 3"/></svg> Pro Users</a>
+    <a data-tab="lifecycle" data-tooltip="New · returning · resurrecting · dormant user composition"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="12" rx="1.5"/><path d="M2 7l8 5 8-5"/></svg> Lifecycle</a>
+    <a data-tab="email" data-tooltip="Email campaign sends, opens &amp; click rates"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="9" rx="1.5"/><path d="M2 7.5l6 3.5 6-3.5"/><rect x="15" y="9" width="2.5" height="5" rx=".5" fill="currentColor" stroke="none"/><rect x="13" y="7" width="2" height="7" rx=".5" fill="currentColor" stroke="none"/></svg> Emails</a>
+    <a data-tab="referrals" data-tooltip="Referral links shared, signups &amp; conversion rate"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 11.5a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1.1 1.1"/><path d="M11.5 8.5a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1.1-1.1"/></svg> Referrals</a>
+    <a data-tab="influencers" data-tooltip="Influencer payouts, payment history &amp; performance"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="6" r="3"/><path d="M1 18a6 6 0 0112 0"/><path d="M14.5 5a2.5 2.5 0 010 5M18 18a5.5 5.5 0 00-5.5-5"/></svg> Influencers</a>
+    <a data-tab="prousers" data-tooltip="All paid subscribers — plan, status, amount, expiry"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M14 4l1.5 1.5L18 3"/></svg> Pro Users</a>
     <div class="nav-section">Monitor</div>
-    <a data-tab="features"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg> Features</a>
-    <a data-tab="dataquality"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 5v5.5c0 4.5 3 7.5 7 8.5 4-1 7-4 7-8.5V5z"/><path d="M7 10.5l2.5 2.5 3.5-4"/></svg> Data Quality</a>
+    <a data-tab="features" data-tooltip="Feature flag usage &amp; adoption analytics"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg> Features</a>
+    <a data-tab="dataquality" data-tooltip="Event coverage · errors · stale events to prune"><svg class="nav-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 5v5.5c0 4.5 3 7.5 7 8.5 4-1 7-4 7-8.5V5z"/><path d="M7 10.5l2.5 2.5 3.5-4"/></svg> Data Quality</a>
   </nav>
   <div class="main">
     <div class="filters">
@@ -450,14 +458,14 @@ h2.tabh .l1-badge{font-size:10px;background:var(--brand);color:#fff;border-radiu
       </div>
       <button class="filter-more-btn" id="filter-more-btn">⚙ Filters</button>
       <div class="filter-extras" id="filter-extras">
-        <div class="fg"><label>Granularity</label><select id="f-gran"><option value="day" selected>Daily</option><option value="hour">Hourly</option></select></div>
-        <div class="fg"><label>Country</label><select id="f-country"><option>All</option><option>India</option><option>US/CA</option><option>RoW</option><option>Unknown</option></select></div>
-        <div class="fg"><label>Platform</label><select id="f-device"><option>All</option><option value="Web">Web (desktop)</option><option value="M-Web">M-Web (mobile)</option><option value="Tablet">Tablet</option><option value="Unknown">Unknown</option></select></div>
-        <div class="fg"><label>Flow</label><select id="f-flow"><option>All</option><option>Main</option><option>SEM</option><option>Direct</option><option>Other</option></select></div>
-        <div class="fg"><label>Channel</label><select id="f-channel"><option>All</option><option>SEM</option><option>Paid social</option><option>Influencer</option><option>Extension</option><option>Email</option><option>Unattributed</option><option>Other</option></select></div>
-        <div class="fg"><label>Plan</label><select id="f-plan"><option>All</option><option>Free</option><option>Paid</option></select></div>
-        <div class="fg"><label>Units</label><div class="seg" id="f-units"><button data-u="num" class="on">#</button><button data-u="pct">%</button></div></div>
-        <div class="fg"><label>Excl. internal</label><div class="seg" id="f-test"><button data-t="1" class="on">On</button><button data-t="0">Off</button></div></div>
+        <div class="fg"><label data-tooltip="Time interval for trend charts">Granularity</label><select id="f-gran"><option value="day" selected>Daily</option><option value="hour">Hourly</option></select></div>
+        <div class="fg"><label data-tooltip="Filter by user's initial detected country (set on first visit, not server-side)">Country</label><select id="f-country"><option>All</option><option>India</option><option>US/CA</option><option>RoW</option><option>Unknown</option></select></div>
+        <div class="fg"><label data-tooltip="Filter by device type at time of event">Platform</label><select id="f-device"><option>All</option><option value="Web">Web (desktop)</option><option value="M-Web">M-Web (mobile)</option><option value="Tablet">Tablet</option><option value="Unknown">Unknown</option></select></div>
+        <div class="fg"><label data-tooltip="Filter by onboarding flow variant (Main, SEM landing, etc.)">Flow</label><select id="f-flow"><option>All</option><option>Main</option><option>SEM</option><option>Direct</option><option>Other</option></select></div>
+        <div class="fg"><label data-tooltip="Filter by marketing or acquisition channel">Channel</label><select id="f-channel"><option>All</option><option>SEM</option><option>Paid social</option><option>Influencer</option><option>Extension</option><option>Email</option><option>Unattributed</option><option>Other</option></select></div>
+        <div class="fg"><label data-tooltip="Filter by subscription plan tier">Plan</label><select id="f-plan"><option>All</option><option>Free</option><option>Paid</option></select></div>
+        <div class="fg"><label data-tooltip="# = absolute counts · % = conversion rates between steps">Units</label><div class="seg" id="f-units"><button data-u="num" class="on">#</button><button data-u="pct">%</button></div></div>
+        <div class="fg"><label data-tooltip="Exclude nextraise.ai, creditdharma.in and test accounts from all metrics">Excl. internal</label><div class="seg" id="f-test"><button data-t="1" class="on">On</button><button data-t="0">Off</button></div></div>
       </div>
       <div class="apply"><button class="btn" id="apply">Apply</button></div>
     </div>
@@ -832,7 +840,7 @@ const loaded={};
 
 // Session query cache — 5-min TTL, survives page refresh within same tab
 const QCACHE={
-  _ttl:5*60*1000,
+  _ttl:30*60*1000,
   _h(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(h>>>0).toString(36)},
   get(k){try{const s=sessionStorage.getItem('qc_'+this._h(k));if(!s)return null;const{ts,data}=JSON.parse(s);return Date.now()-ts<this._ttl?data:null}catch{return null}},
   set(k,v){try{sessionStorage.setItem('qc_'+this._h(k),JSON.stringify({ts:Date.now(),data:v}))}catch{}}
@@ -3115,10 +3123,9 @@ async function loadProUsers(){
   u.id AS uid,
   u.name,
   u.email,
-  coalesce(u.phone,'') AS phone,
-  coalesce(s.plan_key,'') AS plan_key,
+  coalesce(s.plan,'') AS plan_key,
   coalesce(s.status,'') AS sub_status,
-  toString(toDate(s.current_period_end)) AS expires,
+  toString(toDate(s.end_date)) AS expires,
   toString(toDate(s.created_at)) AS subscribed_on,
   round(sumIf(toFloat(p.amount), p.currency='INR') + sumIf(toFloat(p.amount)*${USD_INR}, p.currency='USD')) AS amount_inr,
   anyIf(toString(toFloat(p.amount)), p.currency='INR' AND p.status='completed') AS last_inr,
@@ -3133,7 +3140,8 @@ LEFT JOIN postgres.users ref ON ref.id = u.referred_by_id
 WHERE u.email NOT LIKE '%@nextraise.ai'
   AND u.email NOT LIKE '%@creditdharma.in'
   AND lower(u.email) NOT LIKE '%test%'
-GROUP BY u.id, u.name, u.email, u.phone, s.plan_key, s.status, s.current_period_end, s.created_at
+  AND s.plan != 'free'
+GROUP BY u.id, u.name, u.email, s.plan, s.status, s.end_date, s.created_at
 ORDER BY s.created_at DESC
 LIMIT 500`;
     const data=await q(sql);
