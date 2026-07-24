@@ -62,6 +62,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 -apple-system
 .fbar{height:32px;border-radius:7px;display:flex;align-items:center;padding:0 10px;color:#fff;font-weight:700;min-width:42px;transition:width .35s}
 .fstep .lab{display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px}
 .fstep .lab .nm{font-weight:600}.fstep .lab .dp{color:var(--muted)}
+.dp-rate{font-weight:700;color:var(--brand)}.dp-rate2{font-weight:700;color:var(--act)}.dp-label{font-size:10.5px;color:var(--muted)}.dp-sep{color:var(--line);margin:0 1px}
 .drop{font-size:10.5px;color:var(--warn);margin:2px 0 4px 2px}
 .chartbox{position:relative;height:240px}
 table.bd{width:100%;border-collapse:collapse;font-size:12px}
@@ -1098,10 +1099,15 @@ function renderOverview(){
   const ftips={visitors:'Unique persons with a $pageview in range.',signups:'New accounts: signup_complete event.',activated:'Users with a resume_upload_success event in this window — resume successfully uploaded and processed.',paid:'payment_completed event fires on successful payment. See Revenue card below for postgres truth.'};
   const fst=[['visitors','Visitors','--vis'],['signups','Signups','--sig'],['activated','Activated','--act'],['paid','Paid','--paid']];
   const max=Math.max(+t.visitors||0,1);
+  const _vis=Math.max(+t.visitors||0,1);const _sig=Math.max(+t.signups||0,1);
   document.getElementById('funnel').innerHTML=fst.map((s,i)=>{const val=+t[s[0]]||0,w=Math.max(3,100*val/max),prev=i>0?+t[fst[i-1][0]]||0:null;
-    const conv=prev!=null?PCT(val,prev):'';const drop=prev!=null&&prev>0?`▼ ${(100-100*val/prev).toFixed(1)}% (${NUM(prev-val)} lost)`:'';
-    const show=state.units==='pct'&&prev!=null?conv:NUM(val);
-    return `<div class="fstep"><div class="lab"><span class="nm">${s[1]} <span class="tip" data-tip="${ftips[s[0]]}">i</span></span><span class="dp">${prev!=null?conv+' conv':''}</span></div><div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:var(${s[2]})">${show}</div></div>${drop?`<div class="drop">${drop}</div>`:''}</div>`;}).join('');
+    const drop=prev!=null&&prev>0?`▼ ${(100-100*val/prev).toFixed(1)}% (${NUM(prev-val)} lost)`:'';
+    const show=NUM(val);
+    // Dual conversion rates: vs visitors + vs signups
+    let dp='';
+    if(i===1) dp=`<span class="dp-rate">${PCT(val,_vis)}</span><span class="dp-label"> of visitors</span>`;
+    else if(i>=2) dp=`<span class="dp-rate">${PCT(val,_vis)}</span><span class="dp-label"> of vis</span><span class="dp-sep"> · </span><span class="dp-rate2">${PCT(val,_sig)}</span><span class="dp-label"> of sig</span>`;
+    return `<div class="fstep"><div class="lab"><span class="nm">${s[1]} <span class="tip" data-tip="${ftips[s[0]]}">i</span></span><span class="dp">${dp}</span></div><div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:var(${s[2]})">${show}</div></div>${drop?`<div class="drop">${drop}</div>`:''}</div>`;}).join('');
   document.getElementById('funnel-sub').textContent=NUM(t.visitors)+' visitors → '+NUM(t.paid)+' paid';
   document.getElementById('funnel-note').textContent=(+t.paid||0)<10?'Paid count is sparse — try 30d/90d for the conversion funnel.':'';
   drawTrend(RAW.trend);
